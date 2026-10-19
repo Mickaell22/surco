@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="140" viewBox="0 0 560 140">
+  <!-- Titulo animado "spin" (readme-chulo): los surcos del disco giran como un vinilo,
+       la etiqueta queda fija y el wordmark se revela de izquierda a derecha.
+       Para adaptar: cambiar el texto y el ancho del rect del clipPath (#reveal). -->
+  <defs>
+    <clipPath id="reveal"><rect x="150" y="0" height="140" width="0">
+      <animate attributeName="width" values="0;400;400" keyTimes="0;.35;1" dur="6s" repeatCount="indefinite"
+               calcMode="spline" keySplines=".2 .7 .3 1;0 0 1 1"/>
+    </rect></clipPath>
+  </defs>
+  <circle cx="70" cy="70" r="54" fill="#2A2520"/>
+  <g fill="none" stroke="#C8BDA8" stroke-width="3.8" stroke-linecap="round">
+    <path d="M110.8 52.8 A44.3 44.3 0 1 1 60.7 26.7"/><path d="M52.0 100.8 A35.6 35.6 0 1 1 96.8 93.4"/><path d="M52.4 49.6 A27.0 27.0 0 1 1 46.6 83.5"/>
+    <animateTransform attributeName="transform" type="rotate" from="0 70 70" to="360 70 70" dur="4s" repeatCount="indefinite"/>
+  </g>
+  <circle cx="70" cy="70" r="14.6" fill="#E07B2E"/>
+  <circle cx="70" cy="70" r="3.2" fill="#2A2520"/>
+  <g clip-path="url(#reveal)">
+    <text x="156" y="86" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+          font-size="72" font-weight="800" letter-spacing="-3" fill="#F6F1E8">surco</text>
+    <text x="160" y="116" font-family="ui-monospace, 'SF Mono', Menlo, monospace" font-size="15" fill="#C4B59E">tu música, sin cuentas ni anuncios</text>
+  </g>
+</svg>

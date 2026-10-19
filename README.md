@@ -1,20 +1,109 @@
-# Surco
+<div align="center">
 
-Reproductor de música local para Android, ligero y sin distracciones.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/title-dark.svg">
+  <img src="./docs/screenshots/title.svg" alt="Surco" width="560"/>
+</picture>
 
-- Lee la música del teléfono (MP3, M4A, FLAC, OGG, Opus, WAV) con su portada, artista y álbum.
-- Muestra la letra embebida en el archivo; si es sincronizada (LRC) sigue la línea actual y se puede tocar para saltar.
-- Reproducción en segundo plano con notificación y controles de los audífonos Bluetooth.
-- Canciones, artistas, álbumes y listas `.m3u` que estén junto a la música.
-- Cola editable, reproducir a continuación, aleatorio, repetir y temporizador de apagado.
-- Tema claro/oscuro según el sistema, con la paleta sobria del Facturador.
+### Reproductor de música local para Android: ligero, sobrio y sin cuentas ni anuncios.
+
+**Tu música, en tu teléfono, con su portada y su letra.**<br/>
+**Estadísticas y listas que se arman solas, sin que nada salga del dispositivo.**
+
+<br/>
+
+[![Release](https://img.shields.io/github/v/release/Mickaell22/surco?style=for-the-badge&color=B8530A&label=descargar)](https://github.com/Mickaell22/surco/releases/latest)
+[![Descargas](https://img.shields.io/github/downloads/Mickaell22/surco/total?style=for-the-badge&color=5A5247)](https://github.com/Mickaell22/surco/releases)
+[![Flutter](https://img.shields.io/badge/Flutter-3.38-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
+[![Android](https://img.shields.io/badge/Android-5.0%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white)](#descargar)
+
+[![Letras](https://img.shields.io/badge/letras_sincronizadas-1A1714?style=for-the-badge)](#funciones)
+[![Estadísticas](https://img.shields.io/badge/estadísticas_locales-1A1714?style=for-the-badge)](#estadísticas-y-listas-automáticas)
+[![Temas](https://img.shields.io/badge/temas_y_temporadas-1A1714?style=for-the-badge)](#temas)
+[![Ligera](https://img.shields.io/badge/ligera-1A1714?style=for-the-badge)](#por-qué-es-ligera)
+
+<br/>
+
+[Descargar](#descargar) • [Funciones](#funciones) • [Temas](#temas) • [Poner tu música](#poner-tu-música) • [Privacidad](#privacidad) • [Desarrollo](#desarrollo)
+
+<br/>
+
+<img src="./docs/screenshots/listas.png" alt="Pestaña de listas de Surco" width="270"/>
+&nbsp;&nbsp;
+<img src="./docs/screenshots/configuracion.png" alt="Configuración y temas de Surco" width="270"/>
+
+</div>
+
+---
+
+## Descargar
+
+Baja el APK de la [última versión](https://github.com/Mickaell22/surco/releases/latest):
+
+| Archivo | Para |
+|---|---|
+| `surco-*-arm64-v8a.apk` | casi todos los teléfonos actuales |
+| `surco-*-armeabi-v7a.apk` | teléfonos antiguos de 32 bits |
+| `surco-*-x86_64.apk` | emuladores |
+
+Requiere Android 5.0 o superior. Android te pedirá permitir "instalar apps de origen desconocido" la primera vez. `SHA256SUMS.txt` en cada release permite verificar los archivos.
+
+## Funciones
+
+- **Biblioteca** de canciones, artistas, álbumes y listas `.m3u`, con búsqueda.
+- **Ordenar** por título, artista, agregadas recientemente, más escuchadas o duración.
+- **Letra** embebida en el archivo. Si es sincronizada (LRC) resalta la línea que suena; tocar una línea salta ahí.
+- **Segundo plano** con notificación, pantalla de bloqueo y botones de audífonos Bluetooth.
+- **Cola** editable, reproducir a continuación, aleatorio, repetir (todo o una) y temporizador de apagado.
+- **Retomar** la última cola y posición al abrir la app.
+- **Pausar** al desconectar los audífonos (cable o Bluetooth), para que la música no salga por el parlante.
+- **Saltar silencios** largos al inicio y final de las pistas.
+
+## Estadísticas y listas automáticas
+
+Surco cuenta una escucha cuando oyes al menos 30 segundos (o la mitad, si la canción es corta). Con eso muestra:
+
+- Tiempo escuchado, número de escuchas y canciones distintas en 7 días, 30 días o desde siempre.
+- Minutos por día de la semana.
+- Top de canciones y de artistas.
+
+Y arma solas las listas **Lo mejor de la semana**, **Más escuchadas**, **Escuchadas recientemente**, **Agregadas recientemente** y **Descubre** (canciones que nunca escuchaste, distintas cada día). Cada lista, tuya o automática, lleva un ícono y un tono propios según su nombre (entrenar, tristes, anime, rock...) para reconocerla de un vistazo.
+
+## Temas
+
+Seis paletas sobrias: **Papel** (cálida, la original), **Grafito**, **Bosque**, **Océano**, **Vino** y **Lavanda**. Cada una con modo claro, oscuro o según el sistema, y **negro puro** opcional para pantallas AMOLED.
+
+Con **Tema del día** activado, cada día sale una paleta al azar (estable durante el día y nunca igual a la de ayer).
+
+**Temas de temporada** (se pueden desactivar): en sus fechas la app se viste sola y muestra un pequeño ícono junto al logo.
+
+| Temporada | Fechas |
+|---|---|
+| Halloween | 15–31 de octubre |
+| Día de Muertos | 1–2 de noviembre |
+| Navidad | 1–25 de diciembre |
+| Año Nuevo | 26 de diciembre – 6 de enero |
+| San Valentín | 7–15 de febrero |
+| Tu cumpleaños | el día que elijas en Configuración |
+
+## Poner tu música
+
+1. Copia tus archivos (MP3, M4A, FLAC, OGG, Opus o WAV) a la carpeta `Music` o `Download` del teléfono.
+2. Abre Surco y da permiso de acceso a archivos de audio.
+3. Para listas propias, deja archivos `.m3u` junto a tu música, con una ruta por línea (relativa al `.m3u` o absoluta).
+
+Por defecto solo busca en `Music` y `Download` e ignora audios de menos de 30 segundos y carpetas como WhatsApp, grabaciones, tonos y notificaciones. En Configuración se puede ampliar a todo el teléfono.
+
+## Privacidad
+
+Surco no tiene cuentas, anuncios, analítica ni conexión a internet. La biblioteca, las estadísticas y la configuración se guardan solo en el teléfono, y "Borrar historial de escuchas" en Configuración elimina las estadísticas.
 
 ## Por qué es ligera
 
-- Pocas dependencias: `just_audio` (+ `just_audio_background`), `audio_metadata_reader` (Dart puro), `permission_handler`, `path_provider`.
-- Tipografía del sistema; no se descargan fuentes.
+- Pocas dependencias: `just_audio` (+ `just_audio_background`), `audio_session`, `audio_metadata_reader` (Dart puro), `permission_handler`, `path_provider`.
+- Tipografía del sistema; no descarga fuentes.
 - Las portadas se extraen una vez a caché en disco y se decodifican al tamaño de la miniatura.
-- El escaneo corre en un isolate y solo relee archivos nuevos o modificados (caché JSON).
+- El escaneo corre en un isolate y solo relee archivos nuevos o modificados.
 - La letra se lee del archivo solo al abrirla.
 
 ## Desarrollo
@@ -25,6 +114,12 @@ flutter test
 flutter build apk --release --split-per-abi
 ```
 
-El APK para la mayoría de teléfonos es `build/app/outputs/flutter-apk/app-arm64-v8a-release.apk`.
+- **Firma de release**: crea `android/key.properties` (ignorado por git) con `storeFile`, `storePassword`, `keyAlias` y `keyPassword`. Sin ese archivo el build release usa la llave de debug.
+- **Ícono**: `python3 tool/make_icon.py` (requiere Pillow) regenera los íconos del launcher y `docs/logo.png` a partir del mismo dibujo que `SurcoMark`.
+- **Versiones fijadas**: `pubspec.yaml` fija `permission_handler_android` y `audio_session` a versiones compatibles con el AGP 8.11 de Flutter 3.38; las más nuevas exigen AGP 9.
 
-Nota: `pubspec.yaml` fija `permission_handler_android` y `audio_session` a versiones compatibles con el AGP 8.11 de Flutter 3.38; las más nuevas exigen AGP 9.
+<div align="center">
+<br/>
+<img src="./docs/logo.png" alt="" width="56"/>
+<br/><sub>Surco: el surco del vinilo, donde vive la música.</sub>
+</div>
