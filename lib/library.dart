@@ -210,14 +210,14 @@ Song? _readSong(File f, Song? cached, String coverDir) {
       mtime: mtime,
       title: (m.title ?? '').trim().isEmpty ? baseName : m.title!.trim(),
       artist: artist.isEmpty ? 'Artista desconocido' : artist,
-      album: (m.album ?? '').trim().isEmpty ? 'Sin album' : m.album!.trim(),
+      album: (m.album ?? '').trim().isEmpty ? 'Sin álbum' : m.album!.trim(),
       durationMs: m.duration?.inMilliseconds ?? 0,
       cover: cover,
       hasLyrics: (m.lyrics ?? '').trim().isNotEmpty,
     );
   } catch (_) {
     // Archivo sin tags legibles: igual se puede reproducir.
-    return Song(path: f.path, mtime: mtime, title: baseName, artist: 'Artista desconocido', album: 'Sin album', durationMs: 0);
+    return Song(path: f.path, mtime: mtime, title: baseName, artist: 'Artista desconocido', album: 'Sin álbum', durationMs: 0);
   }
 }
 

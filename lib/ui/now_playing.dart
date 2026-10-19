@@ -384,7 +384,7 @@ void _sleepSheet(BuildContext context) {
             alignment: Alignment.centerLeft,
             child: Text(
               player.sleepAt == null
-                  ? 'Pausar la musica en...'
+                  ? 'Pausar la música en...'
                   : 'Se pausa a las ${TimeOfDay.fromDateTime(player.sleepAt!).format(context)}',
               style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: l.ink),
             ),

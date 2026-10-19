@@ -32,12 +32,12 @@ void showSongActions(BuildContext context, Song s) {
           ]),
         ),
         const Divider(),
-        _Action(Icons.playlist_play_rounded, 'Reproducir a continuacion', () => go(() => player.playNext(s))),
+        _Action(Icons.playlist_play_rounded, 'Reproducir a continuación', () => go(() => player.playNext(s))),
         _Action(Icons.playlist_add_rounded, 'Agregar a la cola', () => go(() => player.enqueue(s))),
         _Action(Icons.person_outline_rounded, 'Ir al artista', () => go(() {
               Navigator.push(context, MaterialPageRoute(builder: (_) => GroupPage(s.artist, library.byArtist[s.artist] ?? [s])));
             })),
-        _Action(Icons.album_outlined, 'Ir al album', () => go(() {
+        _Action(Icons.album_outlined, 'Ir al álbum', () => go(() {
               Navigator.push(context, MaterialPageRoute(builder: (_) => GroupPage(s.album, library.byAlbum[s.album] ?? [s])));
             })),
         const SizedBox(height: 8),

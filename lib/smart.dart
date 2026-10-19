@@ -19,7 +19,7 @@ List<Playlist> smartPlaylists(Library lib, Stats stats) {
 
   return [
     if (week.isNotEmpty) Playlist('Lo mejor de la semana', [for (final c in week) c.song]),
-    if (allTime.isNotEmpty) Playlist('Mas escuchadas', [for (final c in allTime) c.song]),
+    if (allTime.isNotEmpty) Playlist('Más escuchadas', [for (final c in allTime) c.song]),
     if (recent.isNotEmpty) Playlist('Escuchadas recientemente', recent),
     if (added.isNotEmpty) Playlist('Agregadas recientemente', added.take(50).toList()),
     if (unheard.isNotEmpty && stats.events.isNotEmpty) Playlist('Descubre: nunca escuchadas', unheard.take(30).toList()),

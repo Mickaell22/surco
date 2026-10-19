@@ -116,7 +116,7 @@ class GroupTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, color: l.ink)),
               const SizedBox(height: 2),
-              Text('${songs.length} ${songs.length == 1 ? 'cancion' : 'canciones'} · ${fmtDur(Duration(milliseconds: total))}',
+              Text('${songs.length} ${songs.length == 1 ? 'canción' : 'canciones'} · ${fmtDur(Duration(milliseconds: total))}',
                   style: TextStyle(fontSize: 13, color: l.muted, fontFeatures: tabular)),
             ]),
           ),

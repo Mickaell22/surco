@@ -12,8 +12,8 @@ class StatsPage extends StatefulWidget {
 }
 
 enum _Range {
-  week('7 dias', Duration(days: 7)),
-  month('30 dias', Duration(days: 30)),
+  week('7 días', Duration(days: 7)),
+  month('30 días', Duration(days: 30)),
   all('Siempre', null);
 
   const _Range(this.label, this.window);
@@ -28,7 +28,7 @@ class _StatsPageState extends State<StatsPage> {
   Widget build(BuildContext context) {
     final l = Ledger.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Estadisticas')),
+      appBar: AppBar(title: const Text('Estadísticas')),
       bottomNavigationBar: const MiniPlayer(),
       body: ListenableBuilder(
         listenable: stats,
@@ -53,8 +53,8 @@ class _StatsPageState extends State<StatsPage> {
                 padding: EdgeInsets.only(top: 48),
                 child: EmptyState(
                   icon: Icons.insights_outlined,
-                  title: 'Aun no hay escuchas',
-                  body: 'Una cancion cuenta cuando la escuchas hasta la mitad o 4 minutos. Saltarla antes no suma.',
+                  title: 'Aún no hay escuchas',
+                  body: 'Una canción cuenta cuando la escuchas hasta la mitad o 4 minutos. Saltarla antes no suma.',
                 ),
               )
             else ...[
@@ -66,11 +66,11 @@ class _StatsPageState extends State<StatsPage> {
                 Expanded(child: _Tile(value: '$distinct', label: 'canciones')),
               ]),
               const SizedBox(height: 28),
-              const _Heading('Minutos por dia'),
+              const _Heading('Minutos por día'),
               const SizedBox(height: 12),
               _WeekBars(stats.minutesByWeekday(window: w)),
               const SizedBox(height: 28),
-              const _Heading('Canciones mas escuchadas'),
+              const _Heading('Canciones más escuchadas'),
               const SizedBox(height: 4),
               for (final (i, c) in top.indexed)
                 _RankRow(
@@ -96,7 +96,7 @@ class _StatsPageState extends State<StatsPage> {
             ],
             if (events.isNotEmpty) ...[
               const SizedBox(height: 16),
-              Text('Datos solo en este telefono.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12.5, color: l.muted)),
+              Text('Datos solo en este teléfono.', textAlign: TextAlign.center, style: TextStyle(fontSize: 12.5, color: l.muted)),
             ],
           ]);
         },
@@ -149,14 +149,14 @@ class _WeekBars extends StatelessWidget {
   const _WeekBars(this.minutes);
   final List<int> minutes;
   static const _days = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
-  static const _full = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
+  static const _full = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
 
   @override
   Widget build(BuildContext context) {
     final l = Ledger.of(context);
     final peak = minutes.reduce((a, b) => a > b ? a : b);
     return Semantics(
-      label: 'Minutos por dia: ${[for (var i = 0; i < 7; i++) '${_full[i]} ${minutes[i]}'].join(', ')}',
+      label: 'Minutos por día: ${[for (var i = 0; i < 7; i++) '${_full[i]} ${minutes[i]}'].join(', ')}',
       excludeSemantics: true,
       child: SizedBox(
         height: 150,

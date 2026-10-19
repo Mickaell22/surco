@@ -20,7 +20,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await JustAudioBackground.init(
     androidNotificationChannelId: 'com.mickaell.surco.playback',
-    androidNotificationChannelName: 'Reproduccion',
+    androidNotificationChannelName: 'Reproducción',
     androidNotificationOngoing: true,
     artDownscaleWidth: 256,
     artDownscaleHeight: 256,

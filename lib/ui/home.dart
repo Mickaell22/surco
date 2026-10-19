@@ -47,8 +47,8 @@ class _HomeState extends State<Home> {
       return Scaffold(
         body: EmptyState(
           icon: Icons.folder_off_outlined,
-          title: 'Surco necesita ver tu musica',
-          body: 'Da permiso de acceso a archivos de audio para leer las canciones del telefono. Nada sale del dispositivo.',
+          title: 'Surco necesita ver tu música',
+          body: 'Da permiso de acceso a archivos de audio para leer las canciones del teléfono. Nada sale del dispositivo.',
           action: FilledButton(onPressed: openAppSettings, child: const Text('Abrir ajustes')),
         ),
       );
@@ -62,12 +62,12 @@ class _HomeState extends State<Home> {
               ? TextField(
                   autofocus: true,
                   onChanged: (v) => setState(() => _query = v.trim().toLowerCase()),
-                  decoration: const InputDecoration(hintText: 'Buscar cancion, artista o album', isDense: true),
+                  decoration: const InputDecoration(hintText: 'Buscar canción, artista o álbum', isDense: true),
                 )
               : const Wordmark(),
           actions: [
             IconButton(
-              tooltip: _searching ? 'Cerrar busqueda' : 'Buscar',
+              tooltip: _searching ? 'Cerrar búsqueda' : 'Buscar',
               icon: Icon(_searching ? Icons.close_rounded : Icons.search_rounded),
               onPressed: () => setState(() {
                 _searching = !_searching;
@@ -75,7 +75,7 @@ class _HomeState extends State<Home> {
               }),
             ),
             PopupMenuButton<String>(
-              tooltip: 'Mas opciones',
+              tooltip: 'Más opciones',
               icon: const Icon(Icons.more_vert_rounded),
               onSelected: (v) => switch (v) {
                 'stats' => Navigator.push(context, MaterialPageRoute(builder: (_) => const StatsPage())),
@@ -83,8 +83,8 @@ class _HomeState extends State<Home> {
                 _ => library.scan(),
               },
               itemBuilder: (_) => const [
-                PopupMenuItem(value: 'stats', child: ListTile(leading: Icon(Icons.insights_outlined), title: Text('Estadisticas'))),
-                PopupMenuItem(value: 'settings', child: ListTile(leading: Icon(Icons.tune_rounded), title: Text('Configuracion'))),
+                PopupMenuItem(value: 'stats', child: ListTile(leading: Icon(Icons.insights_outlined), title: Text('Estadísticas'))),
+                PopupMenuItem(value: 'settings', child: ListTile(leading: Icon(Icons.tune_rounded), title: Text('Configuración'))),
                 PopupMenuItem(value: 'scan', child: ListTile(leading: Icon(Icons.refresh_rounded), title: Text('Volver a escanear'))),
               ],
             ),
@@ -101,7 +101,7 @@ class _HomeState extends State<Home> {
                   labelColor: l.ink,
                   unselectedLabelColor: l.muted,
                   labelStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                  tabs: const [Tab(text: 'Canciones'), Tab(text: 'Artistas'), Tab(text: 'Albumes'), Tab(text: 'Listas')],
+                  tabs: const [Tab(text: 'Canciones'), Tab(text: 'Artistas'), Tab(text: 'Álbumes'), Tab(text: 'Listas')],
                 ),
         ),
         body: ListenableBuilder(
@@ -112,10 +112,10 @@ class _HomeState extends State<Home> {
                   ? const Center(child: CircularProgressIndicator())
                   : EmptyState(
                       icon: Icons.library_music_outlined,
-                      title: 'No hay musica todavia',
+                      title: 'No hay música todavía',
                       body: library.error != null
-                          ? 'No se pudo leer la musica: ${library.error}'
-                          : 'Copia tus canciones a la carpeta Music o Download del telefono y toca actualizar.',
+                          ? 'No se pudo leer la música: ${library.error}'
+                          : 'Copia tus canciones a la carpeta Music o Download del teléfono y toca actualizar.',
                       action: OutlinedButton(onPressed: library.scan, child: const Text('Buscar de nuevo')),
                     );
             }
@@ -138,7 +138,7 @@ class _HomeState extends State<Home> {
                     Icon(Icons.cake_outlined, color: l.accent, size: 20),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: Text('Feliz cumpleanos. Hoy suena lo que tu quieras.',
+                      child: Text('Feliz cumpleaños. Hoy suena lo que tú quieras.',
                           style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: l.ink)),
                     ),
                   ]),
@@ -288,7 +288,7 @@ class _Playlists extends StatelessWidget {
       if (mine.isEmpty)
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-          child: Text('Surco lee archivos .m3u que esten junto a tu musica. Cada archivo aparece aqui como una lista.',
+          child: Text('Surco lee archivos .m3u que estén junto a tu música. Cada archivo aparece aquí como una lista.',
               style: TextStyle(fontSize: 14, height: 1.45, color: l.inkSoft)),
         ),
       for (final p in mine) SizedBox(height: 68, child: row(p)),
