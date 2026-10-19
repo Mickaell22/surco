@@ -12,10 +12,15 @@
 
 <br/>
 
+<a href="https://github.com/Mickaell22/surco/releases/latest/download/surco-arm64-v8a.apk"><img src="https://img.shields.io/badge/Descargar_APK-B8530A?style=for-the-badge&logo=android&logoColor=white" alt="Descargar APK" height="40"/></a>
+
+<br/><br/>
+
 [![Release](https://img.shields.io/github/v/release/Mickaell22/surco?style=for-the-badge&color=B8530A&label=descargar)](https://github.com/Mickaell22/surco/releases/latest)
 [![Descargas](https://img.shields.io/github/downloads/Mickaell22/surco/total?style=for-the-badge&color=5A5247)](https://github.com/Mickaell22/surco/releases)
 [![Flutter](https://img.shields.io/badge/Flutter-3.38-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
 [![Android](https://img.shields.io/badge/Android-5.0%2B-3DDC84?style=for-the-badge&logo=android&logoColor=white)](#descargar)
+[![Licencia MIT](https://img.shields.io/badge/licencia-MIT-5A5247?style=for-the-badge)](./LICENSE)
 
 [![Letras](https://img.shields.io/badge/letras_sincronizadas-1A1714?style=for-the-badge)](#funciones)
 [![Estadísticas](https://img.shields.io/badge/estadísticas_locales-1A1714?style=for-the-badge)](#estadísticas-y-listas-automáticas)
@@ -42,11 +47,11 @@ Baja el APK de la [última versión](https://github.com/Mickaell22/surco/release
 
 | Archivo | Para |
 |---|---|
-| `surco-*-arm64-v8a.apk` | casi todos los teléfonos actuales |
-| `surco-*-armeabi-v7a.apk` | teléfonos antiguos de 32 bits |
-| `surco-*-x86_64.apk` | emuladores |
+| [`surco-arm64-v8a.apk`](https://github.com/Mickaell22/surco/releases/latest/download/surco-arm64-v8a.apk) | casi todos los teléfonos actuales |
+| [`surco-armeabi-v7a.apk`](https://github.com/Mickaell22/surco/releases/latest/download/surco-armeabi-v7a.apk) | teléfonos antiguos de 32 bits |
+| [`surco-x86_64.apk`](https://github.com/Mickaell22/surco/releases/latest/download/surco-x86_64.apk) | emuladores |
 
-Requiere Android 5.0 o superior. Android te pedirá permitir "instalar apps de origen desconocido" la primera vez. `SHA256SUMS.txt` en cada release permite verificar los archivos.
+Los enlaces bajan siempre la versión más reciente; las anteriores y sus cambios están en [Releases](https://github.com/Mickaell22/surco/releases) y en el [CHANGELOG](./CHANGELOG.md). Requiere Android 5.0 o superior. Android te pedirá permitir "instalar apps de origen desconocido" la primera vez. `SHA256SUMS.txt` en cada release permite verificar los archivos.
 
 ## Funciones
 
@@ -71,11 +76,11 @@ Y arma solas las listas **Lo mejor de la semana**, **Más escuchadas**, **Escuch
 
 ## Temas
 
-Seis paletas sobrias: **Papel** (cálida, la original), **Grafito**, **Bosque**, **Océano**, **Vino** y **Lavanda**. Cada una con modo claro, oscuro o según el sistema, y **negro puro** opcional para pantallas AMOLED.
+Catorce paletas sobrias: **Papel** (cálida, la original), **Grafito**, **Bosque**, **Océano**, **Vino**, **Lavanda**, **Arena**, **Menta**, **Cobre**, **Pizarra**, **Ciruela**, **Atardecer**, **Musgo** y **Cielo**. Cada una con modo claro, oscuro o según el sistema, y **negro puro** opcional para pantallas AMOLED.
 
-Con **Tema del día** activado, cada día sale una paleta al azar (estable durante el día y nunca igual a la de ayer).
+La paleta puede quedarse **fija**, cambiar **cada día** (estable durante el día, nunca igual a la de ayer) o cambiar **cada vez que abres Surco** (nunca la misma seguida). Tocar una paleta mientras manda algo automático la aplica solo por hoy.
 
-**Temas de temporada** (se pueden desactivar): en sus fechas la app se viste sola y muestra un pequeño ícono junto al logo.
+**Temas de temporada** (se pueden desactivar): en sus fechas la app se viste sola, con decoraciones dibujadas (telarañas, luces, papel picado, confeti...) y un pequeño ícono junto al logo. La primera vez que abres Surco ese día sale el tema de la temporada; las siguientes, el cambio automático que elegiste.
 
 | Temporada | Fechas |
 |---|---|
@@ -84,7 +89,13 @@ Con **Tema del día** activado, cada día sale una paleta al azar (estable duran
 | Navidad | 1–25 de diciembre |
 | Año Nuevo | 26 de diciembre – 6 de enero |
 | San Valentín | 7–15 de febrero |
-| Tu cumpleaños | el día que elijas en Configuración |
+| Carnaval | sábado a martes antes del Miércoles de Ceniza (cambia cada año) |
+| San Patricio | 17 de marzo |
+| Día de la Tierra | 22 de abril |
+| Día de la Madre | segundo domingo de mayo y el sábado anterior |
+| Día del Padre | tercer domingo de junio y el sábado anterior |
+| Inti Raymi | 20–24 de junio |
+| Tu cumpleaños | el día que elijas en Configuración (todo el día) |
 
 ## Poner tu música
 
@@ -117,6 +128,10 @@ flutter build apk --release --split-per-abi
 - **Firma de release**: crea `android/key.properties` (ignorado por git) con `storeFile`, `storePassword`, `keyAlias` y `keyPassword`. Sin ese archivo el build release usa la llave de debug.
 - **Ícono**: `python3 tool/make_icon.py` (requiere Pillow) regenera los íconos del launcher y `docs/logo.png` a partir del mismo dibujo que `SurcoMark`.
 - **Versiones fijadas**: `pubspec.yaml` fija `permission_handler_android` y `audio_session` a versiones compatibles con el AGP 8.11 de Flutter 3.38; las más nuevas exigen AGP 9.
+
+## Licencia
+
+[MIT](./LICENSE) © 2026 Mickaell. Puedes usar, modificar y redistribuir el código manteniendo el aviso de licencia.
 
 <div align="center">
 <br/>
