@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:surco/settings.dart';
 
@@ -18,7 +20,7 @@ void main() {
     expect(s.paletteFor(DateTime(2026, 12, 24)), s.palette);
   });
 
-  test('cumpleanos gana sobre todo y solo ese dia', () {
+  test('cumpleaños gana sobre todo y solo ese día', () {
     final s = Settings()
       ..birthdayMonth = 10
       ..birthdayDay = 20;
@@ -26,14 +28,36 @@ void main() {
     expect(s.paletteFor(DateTime(2026, 10, 21)), Palette.halloween);
   });
 
-  test('tema del dia: estable en el dia, nunca de temporada, distinto a ayer', () {
+  test('rotación diaria: estable en el día, nunca de temporada, distinta a ayer', () {
     final d = DateTime(2026, 6, 10);
     expect(dailyPalette(d), dailyPalette(DateTime(2026, 6, 10, 23, 59)));
-    // Dias de calendario (no add(Duration): con cambio de horario 24 h no siempre es "manana").
+    // Días de calendario (no add(Duration): con cambio de horario 24 h no siempre es "mañana").
     for (var i = 0; i < 400; i++) {
       final day = DateTime(2026, 6, 10 + i), prev = DateTime(2026, 6, 9 + i);
       expect(dailyPalette(day).seasonal, isFalse);
       expect(dailyPalette(day), isNot(dailyPalette(prev)));
     }
+  });
+
+  test('al abrir: nunca repite la paleta de la apertura anterior', () {
+    final rnd = Random(1);
+    var last = Palette.papel;
+    for (var i = 0; i < 200; i++) {
+      final next = launchPaletteAfter(last, rnd);
+      expect(next, isNot(last));
+      expect(next.seasonal, isFalse);
+      last = next;
+    }
+  });
+
+  test('elegir una paleta con algo automático vale solo por hoy', () {
+    final s = Settings()..rotation = ThemeRotation.daily;
+    expect(s.choosePalette(Palette.cobre), isTrue);
+    expect(s.activePalette, Palette.cobre);
+    expect(s.paletteFor(DateTime.now().add(const Duration(days: 2))), isNot(Palette.cobre.seasonal ? null : null));
+    final fija = Settings()..rotation = ThemeRotation.fixed;
+    fija.seasonalThemes = false;
+    expect(fija.choosePalette(Palette.musgo), isFalse);
+    expect(fija.paletteFor(DateTime(2030, 3, 3)), Palette.musgo);
   });
 }

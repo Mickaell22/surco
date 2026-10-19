@@ -14,39 +14,53 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = Ledger.of(context);
+    // La app dibuja de borde a borde: el final de la lista no debe quedar
+    // debajo de la barra de navegación de Android.
+    final bottom = MediaQuery.paddingOf(context).bottom;
     return Scaffold(
-      appBar: AppBar(title: const Text('Configuracion')),
+      appBar: AppBar(title: const Text('Configuración')),
       body: ListenableBuilder(
         listenable: settings,
-        builder: (context, _) => ListView(padding: const EdgeInsets.only(bottom: 32), children: [
+        builder: (context, _) => ListView(padding: EdgeInsets.only(bottom: 32 + bottom), children: [
           const _Section('Apariencia'),
-          if (settings.activePalette != settings.palette || settings.dailyTheme)
+          if (_autoNotice() case final notice?)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: Row(children: [
                 Icon(Icons.auto_awesome_outlined, size: 18, color: l.accent),
                 const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Ahora manda ${settings.activePalette.label}${settings.activePalette.seasonal ? ' (temporada)' : ' (tema del dia)'}. Toca una paleta para usarla siempre.',
-                    style: TextStyle(fontSize: 13, color: l.inkSoft),
-                  ),
-                ),
+                Expanded(child: Text(notice, style: TextStyle(fontSize: 13, height: 1.4, color: l.inkSoft))),
               ]),
             ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
             child: Wrap(spacing: 10, runSpacing: 10, children: [
-              for (final p in Palette.regular) _Swatch(p, selected: settings.palette == p && !settings.dailyTheme),
+              for (final p in Palette.regular) _Swatch(p, selected: settings.activePalette == p),
             ]),
           ),
-          _Toggle(
-            'Tema del dia',
-            settings.dailyTheme
-                ? 'Hoy toco ${dailyPalette(DateTime.now()).label}. Manana sale otra al azar'
-                : 'Cada dia una paleta al azar',
-            settings.dailyTheme,
-            (v) => settings.update((x) => x.dailyTheme = v),
+          const _Label('Cambiar de paleta sola'),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+            child: SegmentedButton<ThemeRotation>(
+              showSelectedIcon: false,
+              segments: [for (final r in ThemeRotation.values) ButtonSegment(value: r, label: Text(r.label))],
+              selected: {settings.rotation},
+              onSelectionChanged: (s) => settings.update((x) => x
+                ..rotation = s.first
+                ..overridePalette = null
+                ..overrideDay = null),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            child: Text(
+              switch (settings.rotation) {
+                ThemeRotation.fixed => 'Siempre la paleta que elijas.',
+                ThemeRotation.daily => 'Una paleta al azar cada día; hoy tocó ${dailyPalette(DateTime.now()).label}.',
+                ThemeRotation.launch => 'Una paleta al azar cada vez que abres Surco, nunca la misma seguida.',
+              },
+              style: TextStyle(fontSize: 13, color: l.inkSoft),
+            ),
           ),
           _Toggle(
             'Temas de temporada',
@@ -54,19 +68,26 @@ class SettingsPage extends StatelessWidget {
             settings.seasonalThemes,
             (v) => settings.update((x) => x.seasonalThemes = v),
           ),
+          if (settings.seasonalThemes)
+            _Toggle(
+              'Decoraciones de temporada',
+              'Arañas, luces, papel picado, confeti... quedan quietas si tu teléfono reduce animaciones',
+              settings.decorations,
+              (v) => settings.update((x) => x.decorations = v),
+            ),
           ListTile(
             leading: Icon(Icons.cake_outlined, color: l.inkSoft),
-            title: Text('Tu cumpleanos', style: TextStyle(color: l.ink)),
+            title: Text('Tu cumpleaños', style: TextStyle(color: l.ink)),
             subtitle: Text(
               settings.birthdayMonth == null
-                  ? 'Ese dia Surco se pone de fiesta'
+                  ? 'Ese día Surco se pone de fiesta'
                   : '${settings.birthdayDay} de ${_months[settings.birthdayMonth! - 1]}',
               style: TextStyle(color: l.inkSoft),
             ),
             trailing: settings.birthdayMonth == null
                 ? null
                 : IconButton(
-                    tooltip: 'Quitar cumpleanos',
+                    tooltip: 'Quitar cumpleaños',
                     icon: Icon(Icons.close_rounded, color: l.muted),
                     onPressed: () => settings.update((x) => x
                       ..birthdayMonth = null
@@ -76,7 +97,7 @@ class SettingsPage extends StatelessWidget {
               final now = DateTime.now();
               final d = await showDatePicker(
                 context: context,
-                helpText: 'Elige tu cumpleanos (el ano no importa)',
+                helpText: 'Elige tu cumpleaños (el año no importa)',
                 firstDate: DateTime(now.year),
                 lastDate: DateTime(now.year, 12, 31),
                 initialDate: settings.birthdayMonth == null
@@ -90,8 +111,9 @@ class SettingsPage extends StatelessWidget {
               }
             },
           ),
+          const _Label('Modo'),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
             child: SegmentedButton<ThemeMode>(
               showSelectedIcon: false,
               segments: const [
@@ -105,26 +127,26 @@ class SettingsPage extends StatelessWidget {
           ),
           _Toggle(
             'Negro puro en modo oscuro',
-            'Ahorra bateria en pantallas AMOLED',
+            'Ahorra batería en pantallas AMOLED',
             settings.pureBlack,
             (v) => settings.update((x) => x.pureBlack = v),
           ),
-          const _Section('Reproduccion'),
+          const _Section('Reproducción'),
           _Toggle(
-            'Pausar al desconectar audifonos',
-            'Cable o Bluetooth: la musica no sale por el parlante',
+            'Pausar al desconectar audífonos',
+            'Cable o Bluetooth: la música no sale por el parlante',
             settings.pauseOnUnplug,
             (v) => settings.update((x) => x.pauseOnUnplug = v),
           ),
           _Toggle(
-            'Retomar donde lo deje',
-            'Al abrir la app vuelve la ultima cola y posicion',
+            'Retomar donde lo dejé',
+            'Al abrir la app vuelven la última cola y la posición',
             settings.resumeSession,
             (v) => settings.update((x) => x.resumeSession = v),
           ),
           _Toggle(
             'Saltar silencios',
-            'Recorta los silencios largos al inicio y final',
+            'Recorta los silencios largos al inicio y al final',
             settings.skipSilence,
             (v) => settings.update((x) => x.skipSilence = v),
           ),
@@ -159,17 +181,17 @@ class SettingsPage extends StatelessWidget {
             title: Text('Volver a escanear ahora', style: TextStyle(color: l.ink)),
             onTap: library.scan,
           ),
-          const _Section('Estadisticas'),
+          const _Section('Estadísticas'),
           ListTile(
             leading: Icon(Icons.delete_outline_rounded, color: l.inkSoft),
             title: Text('Borrar historial de escuchas', style: TextStyle(color: l.ink)),
-            subtitle: Text('${stats.events.length} escuchas guardadas en este telefono', style: TextStyle(color: l.inkSoft)),
+            subtitle: Text('${stats.events.length} escuchas guardadas en este teléfono', style: TextStyle(color: l.inkSoft)),
             onTap: () async {
               final ok = await showDialog<bool>(
                 context: context,
                 builder: (d) => AlertDialog(
                   title: const Text('Borrar historial'),
-                  content: const Text('Se pierden las estadisticas y las listas automaticas. No se puede deshacer.'),
+                  content: const Text('Se pierden las estadísticas y las listas automáticas. No se puede deshacer.'),
                   actions: [
                     TextButton(onPressed: () => Navigator.pop(d, false), child: const Text('Cancelar')),
                     TextButton(onPressed: () => Navigator.pop(d, true), child: const Text('Borrar')),
@@ -188,7 +210,9 @@ class SettingsPage extends StatelessWidget {
               Expanded(
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text('Surco $appVersion', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: l.ink)),
-                  Text('Tu musica, sin cuentas ni anuncios. $repoUrl', style: TextStyle(fontSize: 13, color: l.inkSoft)),
+                  const SizedBox(height: 2),
+                  Text('Tu música, sin cuentas ni anuncios.', style: TextStyle(fontSize: 13, color: l.inkSoft)),
+                  Text(repoUrl, style: TextStyle(fontSize: 13, color: l.muted)),
                 ]),
               ),
             ]),
@@ -202,12 +226,23 @@ class SettingsPage extends StatelessWidget {
 const _months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto',
     'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
+/// Explica qué tema está mandando cuando no es la paleta elegida.
+String? _autoNotice() {
+  final active = settings.activePalette;
+  if (settings.hasOverrideToday) {
+    return 'Hoy usas ${active.label} porque la elegiste. Mañana vuelve lo automático.';
+  }
+  if (settings.autoPaletteFor(DateTime.now()) == null) return null;
+  final why = active.seasonal ? 'temporada' : 'cambio automático';
+  return 'Ahora manda ${active.label} ($why). Toca una paleta para usarla hoy.';
+}
+
 String _seasonHint() {
   final now = DateTime.now();
-  if (settings.seasonalThemes && settings.isBirthday(now)) return 'Hoy es tu cumpleanos: modo fiesta';
+  if (settings.isBirthday(now)) return 'Hoy es tu cumpleaños: modo fiesta';
   final s = seasonFor(now);
   return s == null
-      ? 'Halloween, Dia de Muertos, Navidad, Ano Nuevo y San Valentin se aplican solos'
+      ? 'Halloween, Navidad, Carnaval y más se aplican solos en sus fechas'
       : 'Ahora mismo: ${s.label}';
 }
 
@@ -219,6 +254,16 @@ class _Section extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(16, 24, 16, 6),
         child: Text(text.toUpperCase(),
             style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 1.1, color: Ledger.of(context).accent)),
+      );
+}
+
+class _Label extends StatelessWidget {
+  const _Label(this.text);
+  final String text;
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+        child: Text(text, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Ledger.of(context).ink)),
       );
 }
 
@@ -255,27 +300,21 @@ class _Swatch extends StatelessWidget {
     return Semantics(
       selected: selected,
       button: true,
-      label: 'Tema ${p.label}',
+      label: 'Paleta ${p.label}',
       child: InkWell(
         onTap: () {
-          // Elegir una paleta es decir "quiero esta": apaga lo automatico para
-          // que no parezca que el toque no hizo nada.
-          final overridden = settings.activePalette != settings.palette || settings.dailyTheme;
-          settings.update((x) => x
-            ..palette = p
-            ..dailyTheme = false
-            ..seasonalThemes = false);
-          if (overridden) {
-            ScaffoldMessenger.of(context)
-              ..hideCurrentSnackBar()
-              ..showSnackBar(SnackBar(
-                content: Text('Usando ${p.label}. Tema del dia y de temporada desactivados.'),
-                action: SnackBarAction(
-                  label: 'Deshacer',
-                  onPressed: () => settings.update((x) => x.seasonalThemes = true),
-                ),
-              ));
-          }
+          final justToday = settings.choosePalette(p);
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(SnackBar(
+              // Con acción, Flutter deja el aviso fijo por defecto: se fuerza a irse solo.
+              persist: false,
+              duration: const Duration(seconds: 4),
+              content: Text(justToday
+                  ? 'Hoy usas ${p.label}. Mañana vuelve el cambio automático.'
+                  : 'Paleta ${p.label} aplicada.'),
+              action: justToday ? SnackBarAction(label: 'Deshacer', onPressed: settings.clearOverride) : null,
+            ));
         },
         borderRadius: BorderRadius.circular(14),
         child: Container(
