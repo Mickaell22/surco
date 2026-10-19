@@ -140,5 +140,11 @@ IconData? seasonIcon(Palette p) => switch (p) {
       Palette.anioNuevo => Icons.celebration_outlined,
       Palette.sanValentin => Icons.favorite_rounded,
       Palette.cumple => Icons.cake_outlined,
+      Palette.carnaval => Icons.theater_comedy_outlined,
+      Palette.sanPatricio => Icons.eco_outlined,
+      Palette.diaTierra => Icons.public_outlined,
+      Palette.diaMadre => Icons.local_florist_outlined,
+      Palette.diaPadre => Icons.emoji_events_outlined,
+      Palette.intiRaymi => Icons.wb_sunny_outlined,
       _ => null,
     };

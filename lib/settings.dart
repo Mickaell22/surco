@@ -26,6 +26,12 @@ enum Palette {
   navidad('Navidad', 'Rojo y pino', seasonal: true),
   anioNuevo('Año Nuevo', 'Medianoche y dorado', seasonal: true),
   sanValentin('San Valentín', 'Rosa suave', seasonal: true),
+  carnaval('Carnaval', 'Serpentinas y confeti', seasonal: true),
+  sanPatricio('San Patricio', 'Trébol y verde', seasonal: true),
+  diaTierra('Día de la Tierra', 'Hojas y planeta', seasonal: true),
+  diaMadre('Día de la Madre', 'Flores', seasonal: true),
+  diaPadre('Día del Padre', 'Azul marino', seasonal: true),
+  intiRaymi('Inti Raymi', 'Fiesta del sol', seasonal: true),
   cumple('Cumpleaños', 'Vela y confeti', seasonal: true);
 
   const Palette(this.label, this.hint, {this.seasonal = false});
@@ -45,14 +51,45 @@ enum ThemeRotation {
   final String label;
 }
 
-/// Temporada activa en la fecha [d], o null fuera de temporada.
+/// Domingo de Pascua (algoritmo gregoriano anónimo de Meeus/Jones/Butcher).
+DateTime easter(int y) {
+  final a = y % 19, b = y ~/ 100, c = y % 100, d = b ~/ 4, e = b % 4;
+  final f = (b + 8) ~/ 25, g = (b - f + 1) ~/ 3, h = (19 * a + b - d - g + 15) % 30;
+  final i = c ~/ 4, k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7;
+  final m = (a + 11 * h + 22 * l) ~/ 451;
+  final month = (h + l - 7 * m + 114) ~/ 31, day = (h + l - 7 * m + 114) % 31 + 1;
+  return DateTime(y, month, day);
+}
+
+/// [n]-esimo domingo del mes (n = 1..5).
+DateTime nthSunday(int y, int month, int n) {
+  final first = DateTime(y, month, 1);
+  return DateTime(y, month, 1 + (7 - first.weekday) % 7 + 7 * (n - 1));
+}
+
+/// Temporada activa en la fecha [d], o null fuera de temporada. Las fechas
+/// moviles (Carnaval, dias de la Madre y del Padre) se calculan por año.
 Palette? seasonFor(DateTime d) {
+  final day0 = DateTime(d.year, d.month, d.day);
+  bool within(DateTime from, DateTime to) => !day0.isBefore(from) && !day0.isAfter(to);
   final m = d.month, day = d.day;
+  // Aritmetica de calendario (DateTime(y, m, d - n)), no Duration: restar dias
+  // como horas cruza el cambio de horario y corre la fecha un dia.
+  DateTime minus(DateTime x, int days) => DateTime(x.year, x.month, x.day - days);
+  // Carnaval: sabado a martes antes del Miercoles de Ceniza (Pascua - 46).
+  final ash = minus(easter(d.year), 46);
+  if (within(minus(ash, 4), minus(ash, 1))) return Palette.carnaval;
+  final madre = nthSunday(d.year, 5, 2), padre = nthSunday(d.year, 6, 3);
+  if (within(minus(madre, 1), madre)) return Palette.diaMadre;
+  if (within(minus(padre, 1), padre)) return Palette.diaPadre;
   if (m == 10 && day >= 15) return Palette.halloween;
   if (m == 11 && day <= 2) return Palette.muertos;
   if (m == 12 && day <= 25) return Palette.navidad;
   if ((m == 12 && day >= 26) || (m == 1 && day <= 6)) return Palette.anioNuevo;
   if (m == 2 && day >= 7 && day <= 15) return Palette.sanValentin;
+  if (m == 3 && day == 17) return Palette.sanPatricio;
+  if (m == 4 && day == 22) return Palette.diaTierra;
+  if (m == 6 && day >= 20 && day <= 24) return Palette.intiRaymi;
   return null;
 }
 
@@ -122,6 +159,10 @@ class Settings extends ChangeNotifier {
   /// Sorteada en cada apertura (modo "Al abrir"); se recuerda para no repetir.
   Palette launchPalette = Palette.papel;
 
+  /// En temporada, la primera apertura del dia muestra si o si su tema; las
+  /// siguientes siguen la rotacion (con rotacion "Fija" la temporada se queda).
+  bool firstOpenToday = true;
+
   File? _file;
 
   /// Paleta en uso.
@@ -135,7 +176,8 @@ class Settings extends ChangeNotifier {
   Palette? autoPaletteFor(DateTime d) {
     if (seasonalThemes && isBirthday(d)) return Palette.cumple;
     final season = seasonalThemes ? seasonFor(d) : null;
-    if (season != null) return season;
+    final today = _dayKey(d) == _dayKey(DateTime.now());
+    if (season != null && (rotation == ThemeRotation.fixed || firstOpenToday || !today)) return season;
     return switch (rotation) {
       ThemeRotation.fixed => null,
       ThemeRotation.daily => dailyPalette(d),
@@ -172,6 +214,7 @@ class Settings extends ChangeNotifier {
   Future<void> load() async {
     _file = File('${(await getApplicationSupportDirectory()).path}/settings.json');
     Palette? lastLaunch;
+    String? lastOpenDay;
     if (await _file!.exists()) {
       try {
         final j = jsonDecode(await _file!.readAsString()) as Map<String, dynamic>;
@@ -191,6 +234,7 @@ class Settings extends ChangeNotifier {
         overridePalette = p[j['overridePalette']];
         overrideDay = j['overrideDay'];
         lastLaunch = p[j['lastLaunch']];
+        lastOpenDay = j['lastOpenDay'];
         pauseOnUnplug = j['pauseOnUnplug'] ?? pauseOnUnplug;
         resumeSession = j['resumeSession'] ?? resumeSession;
         skipSilence = j['skipSilence'] ?? skipSilence;
@@ -198,6 +242,7 @@ class Settings extends ChangeNotifier {
       } catch (_) {/* archivo corrupto: quedan los valores por defecto */}
     }
     launchPalette = launchPaletteAfter(lastLaunch);
+    firstOpenToday = lastOpenDay != _dayKey(DateTime.now());
     _save();
   }
 
@@ -221,6 +266,7 @@ class Settings extends ChangeNotifier {
         'overridePalette': overridePalette?.name,
         'overrideDay': overrideDay,
         'lastLaunch': launchPalette.name,
+        'lastOpenDay': _dayKey(DateTime.now()),
         'pauseOnUnplug': pauseOnUnplug,
         'resumeSession': resumeSession,
         'skipSilence': skipSilence,

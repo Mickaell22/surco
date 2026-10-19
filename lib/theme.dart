@@ -75,6 +75,12 @@ class Ledger extends ThemeExtension<Ledger> {
         Palette.anioNuevo => (225.0, .22, const Color(0xFF8A6A12), const Color(0xFFE2B84A)),
         Palette.sanValentin => (340.0, .18, const Color(0xFFB8174F), const Color(0xFFF06292)),
         Palette.cumple => (185.0, .14, const Color(0xFF0E7C86), const Color(0xFF4FD1C5)),
+        Palette.carnaval => (285.0, .16, const Color(0xFFC0367A), const Color(0xFFF57EB6)),
+        Palette.sanPatricio => (130.0, .2, const Color(0xFF1E7B3A), const Color(0xFF5FCB7A)),
+        Palette.diaTierra => (120.0, .14, const Color(0xFF2F7A4B), const Color(0xFF6CC48F)),
+        Palette.diaMadre => (330.0, .16, const Color(0xFFB03A6E), const Color(0xFFEE8AB5)),
+        Palette.diaPadre => (220.0, .2, const Color(0xFF244E86), const Color(0xFF7DA7E0)),
+        Palette.intiRaymi => (40.0, .26, const Color(0xFFB4650C), const Color(0xFFF6B23C)),
         Palette.papel => throw StateError('papel'),
       };
       Color n(double l, [double s = 1]) => HSLColor.fromAHSL(1, hue, sat * s, l).toColor();

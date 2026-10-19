@@ -60,4 +60,28 @@ void main() {
     expect(fija.choosePalette(Palette.musgo), isFalse);
     expect(fija.paletteFor(DateTime(2030, 3, 3)), Palette.musgo);
   });
+
+  test('Pascua y fechas moviles', () {
+    expect(easter(2025), DateTime(2025, 4, 20));
+    expect(easter(2026), DateTime(2026, 4, 5));
+    expect(easter(2027), DateTime(2027, 3, 28));
+    expect(seasonFor(DateTime(2026, 2, 17)), Palette.carnaval); // martes de carnaval 2026
+    expect(seasonFor(DateTime(2026, 2, 18)), isNull); // miercoles de ceniza
+    expect(seasonFor(DateTime(2026, 5, 10)), Palette.diaMadre); // 2.o domingo de mayo
+    expect(seasonFor(DateTime(2026, 6, 21)), Palette.diaPadre); // 3.er domingo de junio gana a Inti Raymi
+    expect(seasonFor(DateTime(2026, 6, 23)), Palette.intiRaymi);
+    expect(seasonFor(DateTime(2026, 3, 17)), Palette.sanPatricio);
+  });
+
+  test('temporada: primera apertura del dia si o si, luego la rotacion', () {
+    final s = Settings()..rotation = ThemeRotation.launch;
+    final hoy = DateTime.now();
+    s.firstOpenToday = true;
+    if (seasonFor(hoy) != null) expect(s.activePalette, seasonFor(hoy));
+    s.firstOpenToday = false;
+    if (seasonFor(hoy) != null) expect(s.activePalette, s.launchPalette);
+    // Con rotacion fija la temporada no se suelta.
+    s.rotation = ThemeRotation.fixed;
+    if (seasonFor(hoy) != null) expect(s.activePalette, seasonFor(hoy));
+  });
 }

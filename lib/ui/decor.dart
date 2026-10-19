@@ -83,6 +83,22 @@ class _DecorPainter extends CustomPainter {
       case Palette.cumple:
         _balloons(c, s, v);
         _confetti(c, s, v, 14, [l.accent, const Color(0xFFF2B33D), const Color(0xFFE85C8A)]);
+      case Palette.carnaval:
+        _confetti(c, s, v, 30, const [
+          Color(0xFFE0457B),
+          Color(0xFFF5C518),
+          Color(0xFF2BB5A5),
+          Color(0xFF8E5BD8),
+          Color(0xFFF28C28),
+        ]);
+      case Palette.sanPatricio:
+        _falling(c, s, v, 10, (o, r) => _clover(c, o, r, const Color(0xFF3FA05A).withValues(alpha: .6)));
+      case Palette.diaTierra:
+        _falling(c, s, v, 10, (o, r) => _leaf(c, o, r, const Color(0xFF4E9A5F).withValues(alpha: .55)));
+      case Palette.diaMadre:
+        _falling(c, s, v, 9, (o, r) => _flower(c, o, r, l.accent.withValues(alpha: .6)));
+      case Palette.intiRaymi:
+        _sun(c, Offset(s.width - 10, top + 6), v);
       default:
         break;
     }
@@ -120,9 +136,13 @@ class _DecorPainter extends CustomPainter {
 
   void _spider(Canvas c, Offset anchor, double len, double v) {
     final body = anchor + Offset(0, len);
-    c.drawLine(anchor, body, Paint()
-      ..color = l.ink.withValues(alpha: .35)
-      ..strokeWidth = 1);
+    c.drawLine(
+      anchor,
+      body,
+      Paint()
+        ..color = l.ink.withValues(alpha: .35)
+        ..strokeWidth = 1,
+    );
     final ink = Paint()..color = dark ? const Color(0xFF0C0A0E) : l.ink;
     final outline = Paint()
       ..color = dark ? l.inkSoft.withValues(alpha: .7) : l.ink
@@ -137,10 +157,11 @@ class _DecorPainter extends CustomPainter {
         final knee = Offset(body.dx + side * (9 + i), y - 6 + i * 2 + wiggle);
         final foot = Offset(body.dx + side * (15 + i * 1.5), y + 3 + i * 2.5);
         c.drawPath(
-            Path()
-              ..moveTo(body.dx, y)
-              ..quadraticBezierTo(knee.dx, knee.dy, foot.dx, foot.dy),
-            outline);
+          Path()
+            ..moveTo(body.dx, y)
+            ..quadraticBezierTo(knee.dx, knee.dy, foot.dx, foot.dy),
+          outline,
+        );
       }
     }
     c.drawOval(Rect.fromCenter(center: body + const Offset(0, 4), width: 13, height: 15), ink);
@@ -180,9 +201,12 @@ class _DecorPainter extends CustomPainter {
     var i = 0;
     for (var x = 0.0; x < w; x += span) {
       final a = Offset(x, top + 2), b = Offset(x + span, top + 2), mid = Offset(x + span / 2, top + 20);
-      c.drawPath(Path()
-        ..moveTo(a.dx, a.dy)
-        ..quadraticBezierTo(mid.dx, mid.dy, b.dx, b.dy), wire);
+      c.drawPath(
+        Path()
+          ..moveTo(a.dx, a.dy)
+          ..quadraticBezierTo(mid.dx, mid.dy, b.dx, b.dy),
+        wire,
+      );
       for (final f in [.2, .5, .8]) {
         // Punto sobre la curva cuadratica.
         final pt = Offset(
@@ -192,8 +216,10 @@ class _DecorPainter extends CustomPainter {
         final glow = .55 + .45 * sin((v * 6 + i * .37) * 2 * pi);
         final col = colors[i % colors.length];
         c.drawCircle(pt + const Offset(0, 6), 7, Paint()..color = col.withValues(alpha: .18 * glow));
-        c.drawOval(Rect.fromCenter(center: pt + const Offset(0, 6), width: 6, height: 9),
-            Paint()..color = col.withValues(alpha: .6 + .4 * glow));
+        c.drawOval(
+          Rect.fromCenter(center: pt + const Offset(0, 6), width: 6, height: 9),
+          Paint()..color = col.withValues(alpha: .6 + .4 * glow),
+        );
         i++;
       }
     }
@@ -225,7 +251,10 @@ class _DecorPainter extends CustomPainter {
       c.save();
       c.translate(x + fw / 2, top + 1);
       c.rotate(sway);
-      final path = Path()..moveTo(-fw / 2, 0)..lineTo(fw / 2, 0)..lineTo(fw / 2, fh);
+      final path = Path()
+        ..moveTo(-fw / 2, 0)
+        ..lineTo(fw / 2, 0)
+        ..lineTo(fw / 2, fh);
       // Borde inferior en zigzag.
       for (var k = 0; k < 4; k++) {
         path.lineTo(fw / 2 - fw / 8 * (2 * k + 1), fh - 5);
@@ -237,8 +266,10 @@ class _DecorPainter extends CustomPainter {
         ..addPolygon([const Offset(-11, 7), const Offset(-8, 11), const Offset(-11, 15), const Offset(-14, 11)], true)
         ..addPolygon([const Offset(11, 7), const Offset(14, 11), const Offset(11, 15), const Offset(8, 11)], true)
         ..addOval(Rect.fromCenter(center: const Offset(0, 21), width: 4, height: 4));
-      c.drawPath(Path.combine(PathOperation.difference, path, cut),
-          Paint()..color = colors[i % colors.length].withValues(alpha: dark ? .75 : .85));
+      c.drawPath(
+        Path.combine(PathOperation.difference, path, cut),
+        Paint()..color = colors[i % colors.length].withValues(alpha: dark ? .75 : .85),
+      );
       c.restore();
       i++;
     }
@@ -254,8 +285,7 @@ class _DecorPainter extends CustomPainter {
       c.save();
       c.translate(x, y);
       c.rotate((v * 4 + r.nextDouble()) * 2 * pi);
-      c.drawRect(const Rect.fromLTWH(-3, -1.5, 6, 3),
-          Paint()..color = colors[i % colors.length].withValues(alpha: .7));
+      c.drawRect(const Rect.fromLTWH(-3, -1.5, 6, 3), Paint()..color = colors[i % colors.length].withValues(alpha: .7));
       c.restore();
     }
   }
@@ -267,16 +297,82 @@ class _DecorPainter extends CustomPainter {
       final x = (i.isEven ? .08 : .9) * s.width + r.nextDouble() * 20 + 8 * sin((v * 2 + i) * 2 * pi);
       final y = s.height - ((v * .8 + i / 3) % 1) * (s.height + 120) + 40;
       final col = colors[i % colors.length].withValues(alpha: .75);
-      c.drawLine(Offset(x, y + 18), Offset(x - 4 + 6 * sin(v * 2 * pi * 3), y + 56),
-          Paint()
-            ..color = l.inkSoft.withValues(alpha: .45)
-            ..strokeWidth = 1);
+      c.drawLine(
+        Offset(x, y + 18),
+        Offset(x - 4 + 6 * sin(v * 2 * pi * 3), y + 56),
+        Paint()
+          ..color = l.inkSoft.withValues(alpha: .45)
+          ..strokeWidth = 1,
+      );
       c.drawOval(Rect.fromCenter(center: Offset(x, y), width: 26, height: 32), Paint()..color = col);
       c.drawPath(
-          Path()..moveTo(x - 3, y + 17)..lineTo(x + 3, y + 17)..lineTo(x, y + 13)..close(), Paint()..color = col);
-      c.drawOval(Rect.fromCenter(center: Offset(x - 6, y - 7), width: 5, height: 8),
-          Paint()..color = Colors.white.withValues(alpha: .35));
+        Path()
+          ..moveTo(x - 3, y + 17)
+          ..lineTo(x + 3, y + 17)
+          ..lineTo(x, y + 13)
+          ..close(),
+        Paint()..color = col,
+      );
+      c.drawOval(
+        Rect.fromCenter(center: Offset(x - 6, y - 7), width: 5, height: 8),
+        Paint()..color = Colors.white.withValues(alpha: .35),
+      );
     }
+  }
+
+  // --- Formas que caen girando (tréboles, hojas, flores) ---
+
+  void _falling(Canvas c, Size s, double v, int n, void Function(Offset o, double r) draw) {
+    for (var i = 0; i < n; i++) {
+      final r = Random(400 + i);
+      final y = ((v * (.5 + r.nextDouble() * .5) + r.nextDouble()) % 1) * (s.height + 40) - 20;
+      final x = r.nextDouble() * s.width + 20 * sin((v * 2 + i) * 2 * pi);
+      c.save();
+      c.translate(x, y);
+      c.rotate(sin((v + i) * 2 * pi) * .8);
+      draw(Offset.zero, 6 + r.nextDouble() * 5);
+      c.restore();
+    }
+  }
+
+  void _clover(Canvas c, Offset o, double r, Color color) {
+    final p = Paint()..color = color;
+    for (var i = 0; i < 3; i++) {
+      final a = -pi / 2 + i * 2 * pi / 3;
+      c.drawCircle(o + Offset(cos(a), sin(a)) * r * .55, r * .5, p);
+    }
+    c.drawLine(o, o + Offset(r * .3, r * 1.2), p..strokeWidth = 1.4);
+  }
+
+  void _leaf(Canvas c, Offset o, double r, Color color) {
+    c.drawPath(
+      Path()
+        ..moveTo(o.dx, o.dy - r)
+        ..quadraticBezierTo(o.dx + r * .9, o.dy, o.dx, o.dy + r)
+        ..quadraticBezierTo(o.dx - r * .9, o.dy, o.dx, o.dy - r),
+      Paint()..color = color,
+    );
+  }
+
+  void _flower(Canvas c, Offset o, double r, Color color) {
+    final p = Paint()..color = color;
+    for (var i = 0; i < 5; i++) {
+      final a = i * 2 * pi / 5;
+      c.drawCircle(o + Offset(cos(a), sin(a)) * r * .55, r * .42, p);
+    }
+    c.drawCircle(o, r * .3, Paint()..color = const Color(0xFFF5C518).withValues(alpha: .8));
+  }
+
+  void _sun(Canvas c, Offset o, double v) {
+    final ray = Paint()
+      ..color = const Color(0xFFF6B23C).withValues(alpha: .45)
+      ..strokeWidth = 3
+      ..strokeCap = StrokeCap.round;
+    for (var i = 0; i < 12; i++) {
+      final a = v * 2 * pi * .5 + i * 2 * pi / 12;
+      c.drawLine(o + Offset(cos(a), sin(a)) * 42, o + Offset(cos(a), sin(a)) * 62, ray);
+    }
+    c.drawCircle(o, 34, Paint()..color = const Color(0xFFF6B23C).withValues(alpha: .35));
   }
 
   // --- San Valentín ---
@@ -341,6 +437,63 @@ class _BadgePainter extends CustomPainter {
         _heart(c, Offset(s.width / 2, s.height * .62), 14, l.accent);
       case Palette.cumple:
         _cake(c, Offset(s.width / 2, s.height * .62), 16);
+      case Palette.carnaval:
+        for (final (x, col) in [(.3, Color(0xFFE0457B)), (.5, Color(0xFFF5C518)), (.7, Color(0xFF2BB5A5))]) {
+          _star(c, Offset(s.width * x, s.height * .5), 8, col);
+        }
+      case Palette.sanPatricio:
+        _star(c, Offset(s.width / 2, s.height / 2), 0, const Color(0x00000000));
+        final p = Paint()..color = const Color(0xFF3FA05A);
+        final o = Offset(s.width / 2, s.height * .45);
+        for (var i = 0; i < 4; i++) {
+          final a = i * pi / 2 + pi / 4;
+          c.drawCircle(o + Offset(cos(a), sin(a)) * 8, 7.5, p);
+        }
+        c.drawLine(o, o + const Offset(5, 17), p..strokeWidth = 2.4);
+      case Palette.diaTierra:
+        final o = Offset(s.width / 2, s.height / 2);
+        c.drawCircle(o, 15, Paint()..color = const Color(0xFF3E8EDE));
+        c.drawPath(
+          Path()
+            ..addOval(Rect.fromCenter(center: o + const Offset(-5, -4), width: 13, height: 9))
+            ..addOval(Rect.fromCenter(center: o + const Offset(6, 6), width: 11, height: 8)),
+          Paint()..color = const Color(0xFF4E9A5F),
+        );
+      case Palette.diaMadre:
+        for (final (x, r) in [(.32, 9.0), (.55, 12.0), (.78, 8.0)]) {
+          final o = Offset(s.width * x, s.height * .55);
+          for (var i = 0; i < 5; i++) {
+            final a = i * 2 * pi / 5;
+            c.drawCircle(o + Offset(cos(a), sin(a)) * r * .55, r * .45, Paint()..color = l.accent);
+          }
+          c.drawCircle(o, r * .3, Paint()..color = const Color(0xFFF5C518));
+        }
+      case Palette.diaPadre:
+        // Corbata.
+        final o = Offset(s.width / 2, 4);
+        final p = Paint()..color = l.accent;
+        c.drawPath(
+          Path()
+            ..moveTo(o.dx - 6, o.dy)
+            ..lineTo(o.dx + 6, o.dy)
+            ..lineTo(o.dx + 3, o.dy + 7)
+            ..lineTo(o.dx - 3, o.dy + 7)
+            ..close(),
+          p,
+        );
+        c.drawPath(
+          Path()
+            ..moveTo(o.dx - 3, o.dy + 7)
+            ..lineTo(o.dx + 3, o.dy + 7)
+            ..lineTo(o.dx + 8, o.dy + 28)
+            ..lineTo(o.dx, o.dy + 35)
+            ..lineTo(o.dx - 8, o.dy + 28)
+            ..close(),
+          p,
+        );
+      case Palette.intiRaymi:
+        _star(c, Offset(s.width / 2, s.height / 2), 17, const Color(0xFFF6B23C));
+        c.drawCircle(Offset(s.width / 2, s.height / 2), 9, Paint()..color = const Color(0xFFF28C28));
       default:
         break;
     }
@@ -353,26 +506,31 @@ class _BadgePainter extends CustomPainter {
     c.drawOval(Rect.fromCenter(center: o, width: r * 1.2, height: r * 1.8), rib);
     c.drawOval(Rect.fromCenter(center: o, width: r * .5, height: r * 1.75), body);
     c.drawRRect(
-        RRect.fromRectAndRadius(Rect.fromCenter(center: o - Offset(-r * .1, r * 1.0), width: r * .35, height: r * .6),
-            const Radius.circular(2)),
-        Paint()..color = const Color(0xFF5C7A2E));
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(center: o - Offset(-r * .1, r * 1.0), width: r * .35, height: r * .6),
+        const Radius.circular(2),
+      ),
+      Paint()..color = const Color(0xFF5C7A2E),
+    );
     if (!face) return;
     final f = Paint()..color = const Color(0xFF2A1A0E);
     for (final dx in [-.45, .45]) {
       c.drawPath(
-          Path()
-            ..moveTo(o.dx + r * dx - r * .2, o.dy - r * .05)
-            ..lineTo(o.dx + r * dx + r * .2, o.dy - r * .05)
-            ..lineTo(o.dx + r * dx, o.dy - r * .4)
-            ..close(),
-          f);
+        Path()
+          ..moveTo(o.dx + r * dx - r * .2, o.dy - r * .05)
+          ..lineTo(o.dx + r * dx + r * .2, o.dy - r * .05)
+          ..lineTo(o.dx + r * dx, o.dy - r * .4)
+          ..close(),
+        f,
+      );
     }
     c.drawPath(
-        Path()
-          ..moveTo(o.dx - r * .6, o.dy + r * .25)
-          ..quadraticBezierTo(o.dx, o.dy + r * .8, o.dx + r * .6, o.dy + r * .25)
-          ..quadraticBezierTo(o.dx, o.dy + r * .5, o.dx - r * .6, o.dy + r * .25),
-        f);
+      Path()
+        ..moveTo(o.dx - r * .6, o.dy + r * .25)
+        ..quadraticBezierTo(o.dx, o.dy + r * .8, o.dx + r * .6, o.dy + r * .25)
+        ..quadraticBezierTo(o.dx, o.dy + r * .5, o.dx - r * .6, o.dy + r * .25),
+      f,
+    );
   }
 
   void _marigold(Canvas c, Offset o, double r) {
@@ -394,8 +552,10 @@ class _BadgePainter extends CustomPainter {
     c.drawRect(Rect.fromCenter(center: box.center, width: r * .35, height: box.height), ribbon);
     c.drawRect(Rect.fromLTWH(box.left, box.top - 2, box.width, r * .4), Paint()..color = const Color(0xFF8E1A24));
     for (final dx in [-1, 1]) {
-      c.drawOval(Rect.fromCenter(center: Offset(o.dx + dx * r * .35, box.top - r * .25), width: r * .7, height: r * .45),
-          ribbon);
+      c.drawOval(
+        Rect.fromCenter(center: Offset(o.dx + dx * r * .35, box.top - r * .25), width: r * .7, height: r * .45),
+        ribbon,
+      );
     }
   }
 
@@ -414,10 +574,14 @@ class _BadgePainter extends CustomPainter {
     final base = Rect.fromCenter(center: o + Offset(0, r * .3), width: r * 2.2, height: r * 1.1);
     c.drawRRect(RRect.fromRectAndRadius(base, const Radius.circular(4)), Paint()..color = const Color(0xFFF3D2B3));
     c.drawRect(Rect.fromLTWH(base.left, base.top, base.width, r * .3), Paint()..color = l.accent);
-    c.drawRect(Rect.fromCenter(center: Offset(o.dx, base.top - r * .35), width: r * .18, height: r * .6),
-        Paint()..color = const Color(0xFF7FB7E6));
-    c.drawOval(Rect.fromCenter(center: Offset(o.dx, base.top - r * .8), width: r * .25, height: r * .4),
-        Paint()..color = const Color(0xFFF5B83D));
+    c.drawRect(
+      Rect.fromCenter(center: Offset(o.dx, base.top - r * .35), width: r * .18, height: r * .6),
+      Paint()..color = const Color(0xFF7FB7E6),
+    );
+    c.drawOval(
+      Rect.fromCenter(center: Offset(o.dx, base.top - r * .8), width: r * .25, height: r * .4),
+      Paint()..color = const Color(0xFFF5B83D),
+    );
   }
 
   @override
