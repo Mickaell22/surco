@@ -1,9 +1,6 @@
 <div align="center">
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./docs/screenshots/title-dark.svg">
-  <img src="./docs/screenshots/title.svg" alt="Surco" width="560"/>
-</picture>
+<img src="./docs/screenshots/title.svg" alt="Surco" width="560"/>
 
 ### Reproductor de música local para Android: ligero, sobrio y sin cuentas ni anuncios.
 

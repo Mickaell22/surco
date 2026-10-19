@@ -1,13 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="560" height="140" viewBox="0 0 560 140">
   <!-- Titulo animado "spin" (readme-chulo): los surcos del disco giran como un vinilo,
        la etiqueta queda fija y el wordmark se revela de izquierda a derecha.
+       Lleva su propia tarjeta de fondo (papel): se lee igual en tema claro y oscuro.
+       El rect parte en width=400: donde no hay animacion (rasterizadores, npm)
+       el primer cuadro muestra la palabra completa.
        Para adaptar: cambiar el texto y el ancho del rect del clipPath (#reveal). -->
   <defs>
-    <clipPath id="reveal"><rect x="150" y="0" height="140" width="0">
+    <clipPath id="reveal"><rect x="150" y="0" height="140" width="400">
       <animate attributeName="width" values="0;400;400" keyTimes="0;.35;1" dur="6s" repeatCount="indefinite"
                calcMode="spline" keySplines=".2 .7 .3 1;0 0 1 1"/>
     </rect></clipPath>
   </defs>
+  <rect x="1" y="1" width="558" height="138" rx="22" fill="#F6F1E8" stroke="#E2D8C5" stroke-width="2"/>
   <circle cx="70" cy="70" r="54" fill="#1A1714"/>
   <g fill="none" stroke="#8F8678" stroke-width="3.8" stroke-linecap="round">
     <path d="M110.8 52.8 A44.3 44.3 0 1 1 60.7 26.7"/><path d="M52.0 100.8 A35.6 35.6 0 1 1 96.8 93.4"/><path d="M52.4 49.6 A27.0 27.0 0 1 1 46.6 83.5"/>
