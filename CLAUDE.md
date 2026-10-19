@@ -58,10 +58,12 @@ Reproductor de música local para Android en Flutter. Repo **público** `github.
 
 - 294 canciones `.m4a` con portada, tags limpios y letra embebida, más 11 listas `.m3u` por ánimo, en `~/Desktop/Musica` y en el teléfono en `Music/Musica`.
 - Script de descarga: `/root/ytm-tool/bajar.py` + `songs.tsv` (yt-dlp con YouTube Music, letras de lrclib, cookies de Firefox vía `YTM_COOKIES_BROWSER`). Re-ejecutable: salta lo ya bajado.
-- **Música nueva**: leer el historial de Firefox (`~/.mozilla/firefox/nitiqjou.default-esr/places.sqlite`, copiarlo antes de abrirlo) desde la última vez, descartar lo ya bajado o que no es música, mostrar candidatas al dueño, bajar y clasificar en las listas por ánimo. Nunca más de 1 petición a la vez a YouTube (con 12 en paralelo bloqueó la IP como bot).
+- **Música nueva (flujo preferido por el dueño)**: cuando diga "analiza de nuevo mi YouTube", hacerlo Claude completo (no quiere un comando suyo): leer el historial de Firefox (`~/.mozilla/firefox/nitiqjou.default-esr/places.sqlite`, copiarlo antes de abrirlo) desde la última vez, descartar lo ya bajado o que no es música, mostrar candidatas al dueño, bajar y clasificar en las listas por ánimo. Nunca más de 1 petición a la vez a YouTube (con 12 en paralelo bloqueó la IP como bot).
 
 ## Pendiente (pedido por el dueño)
 
 - **Métricas 1.3.0**: registrar también los saltos (hoy solo se guardan escuchas válidas), más saltadas, menos escuchadas, nunca escuchadas, por hora del día, racha de días, % que terminas, todo filtrable (rango, escuchas vs tiempo, cuántas mostrar), exportar el historial a JSON y **resumen semanal el domingo a las 20:00 con notificación** (requiere `flutter_local_notifications`; revisar compatibilidad con AGP 8.11).
 - **Personalización**: tamaño de letra, forma de portadas, densidad de lista, acento a elección, estilo del reproductor.
-- Posible comando `musica-nueva` para que el dueño agregue música sin Claude.
+- **Sincronizar la música** subida a algún lado para usarla en otros dispositivos (anotado para después, sin diseño todavía).
+- README: el título (`docs/screenshots/title.svg`) lleva su propia tarjeta de fondo para leerse en tema claro y oscuro; no volver a `<picture>` con variante oscura. Verificar siempre con el `preview_shot.py` de la skill readme-chulo antes de publicar.
+- Capturas del README: sin portadas de discos (repo público) ni barra de estado; recortar el mini reproductor.
