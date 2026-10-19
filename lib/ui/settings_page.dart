@@ -5,7 +5,7 @@ import '../settings.dart';
 import '../theme.dart';
 import 'brand.dart';
 
-const appVersion = '1.1.1';
+const appVersion = '1.2.0';
 const repoUrl = 'github.com/Mickaell22/surco';
 
 class SettingsPage extends StatelessWidget {
