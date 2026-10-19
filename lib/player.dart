@@ -1,21 +1,103 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 
+import 'package:audio_session/audio_session.dart';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'library.dart';
+import 'settings.dart';
+import 'stats.dart';
 
 /// Envoltorio fino sobre just_audio. La notificacion, la pantalla de bloqueo
 /// y los botones de los audifonos Bluetooth los maneja just_audio_background.
 class Player extends ChangeNotifier {
+  Player(this.stats, this.settings) {
+    audio.currentIndexStream.listen((_) {
+      _commit();
+      _saveSession();
+      notifyListeners();
+    });
+    // Fin natural de una cancion (incluye "repetir una", donde el indice no cambia).
+    audio.positionDiscontinuityStream.listen((d) {
+      if (d.reason == PositionDiscontinuityReason.autoAdvance) _commit();
+    });
+    audio.playingStream.listen((playing) {
+      playing ? _listened.start() : _listened.stop();
+      if (!playing) _saveSession();
+    });
+    settings.addListener(() => audio.setSkipSilenceEnabled(settings.skipSilence));
+    _initSession();
+  }
+
+  final Stats stats;
+  final Settings settings;
   final audio = AudioPlayer();
   List<Song> queue = [];
   Timer? _sleep;
   DateTime? sleepAt;
 
-  Player() {
-    audio.currentIndexStream.listen((_) => notifyListeners());
+  final _listened = Stopwatch();
+  Song? _tracked;
+  DateTime _trackedAt = DateTime.now();
+
+  Future<void> _initSession() async {
+    final session = await AudioSession.instance;
+    await session.configure(const AudioSessionConfiguration.music());
+    // Desconectar audifonos (cable o Bluetooth) dispara "becoming noisy".
+    session.becomingNoisyEventStream.listen((_) {
+      if (settings.pauseOnUnplug) audio.pause();
+    });
+    await audio.setSkipSilenceEnabled(settings.skipSilence);
+  }
+
+  /// Registra cuanto se escucho de la cancion anterior y empieza a medir la actual.
+  void _commit() {
+    final prev = _tracked;
+    if (prev != null) stats.record(prev, _trackedAt, _listened.elapsedMilliseconds);
+    _listened.reset();
+    if (audio.playing) _listened.start();
+    _tracked = current;
+    _trackedAt = DateTime.now();
+  }
+
+  // --- Sesion: cola, cancion y posicion para retomar al abrir la app ---
+
+  Future<File> get _sessionFile async => File('${(await getApplicationSupportDirectory()).path}/session.json');
+
+  Future<void> _saveSession() async {
+    if (queue.isEmpty) return;
+    (await _sessionFile).writeAsString(jsonEncode({
+      'q': [for (final s in queue) s.path],
+      'i': audio.currentIndex ?? 0,
+      'pos': audio.position.inMilliseconds,
+      'shuffle': audio.shuffleModeEnabled,
+      'loop': audio.loopMode.name,
+    }));
+  }
+
+  Future<void> restoreSession(Map<String, Song> byPath) async {
+    if (!settings.resumeSession || queue.isNotEmpty) return;
+    try {
+      final j = jsonDecode(await (await _sessionFile).readAsString());
+      final paths = (j['q'] as List).cast<String>();
+      final idx = j['i'] as int;
+      final songs = [for (final p in paths) byPath[p]].whereType<Song>().toList();
+      if (songs.isEmpty) return;
+      final start = idx < paths.length ? songs.indexWhere((s) => s.path == paths[idx]) : 0;
+      queue = songs;
+      await audio.setAudioSources(
+        [for (final s in queue) AudioSource.file(s.path, tag: _media(s))],
+        initialIndex: start < 0 ? 0 : start,
+        initialPosition: start < 0 ? Duration.zero : Duration(milliseconds: j['pos'] ?? 0),
+      );
+      await audio.setLoopMode(LoopMode.values.asNameMap()[j['loop']] ?? LoopMode.off);
+      if (j['shuffle'] == true) await audio.setShuffleModeEnabled(true);
+      notifyListeners();
+    } catch (_) {/* sin sesion previa o archivos movidos */}
   }
 
   Song? get current {
