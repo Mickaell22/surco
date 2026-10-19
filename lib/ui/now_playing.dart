@@ -204,6 +204,18 @@ class _Controls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = Ledger.of(context);
+    // Aleatorio y repetir no emiten en playerStateStream: sin escuchar sus
+    // streams el modo cambiaba pero el botón no se volvía a pintar.
+    return StreamBuilder<bool>(
+      stream: player.audio.shuffleModeEnabledStream,
+      builder: (_, _) => StreamBuilder<LoopMode>(
+        stream: player.audio.loopModeStream,
+        builder: (_, _) => _build(l),
+      ),
+    );
+  }
+
+  Widget _build(Ledger l) {
     return StreamBuilder<PlayerState>(
       stream: player.audio.playerStateStream,
       builder: (_, snap) {
