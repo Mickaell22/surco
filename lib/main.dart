@@ -33,8 +33,38 @@ Future<void> main() async {
   runApp(const SurcoApp());
 }
 
-class SurcoApp extends StatelessWidget {
+class SurcoApp extends StatefulWidget {
   const SurcoApp({super.key});
+
+  @override
+  State<SurcoApp> createState() => _SurcoAppState();
+}
+
+class _SurcoAppState extends State<SurcoApp> with WidgetsBindingObserver {
+  bool _wasInBackground = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  // Salir con inicio/volver deja la app viva en memoria: sin esto "Al abrir"
+  // solo sorteaba en un arranque en frio. Bajar la cortina (inactive) no cuenta.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) _wasInBackground = true;
+    if (state == AppLifecycleState.resumed && _wasInBackground) {
+      _wasInBackground = false;
+      settings.newOpen();
+    }
+  }
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(

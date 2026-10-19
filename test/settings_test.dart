@@ -84,4 +84,14 @@ void main() {
     s.rotation = ThemeRotation.fixed;
     if (seasonFor(hoy) != null) expect(s.activePalette, seasonFor(hoy));
   });
+
+  test('volver a la app sortea otra paleta y la temporada ya no manda ese dia', () {
+    final s = Settings()..rotation = ThemeRotation.launch;
+    s.newOpen(); // primera apertura registrada del dia
+    expect(s.firstOpenToday, isTrue);
+    final antes = s.launchPalette;
+    s.newOpen(); // vuelve desde segundo plano
+    expect(s.firstOpenToday, isFalse);
+    expect(s.launchPalette, isNot(antes));
+  });
 }

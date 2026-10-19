@@ -243,8 +243,23 @@ class Settings extends ChangeNotifier {
     }
     launchPalette = launchPaletteAfter(lastLaunch);
     firstOpenToday = lastOpenDay != _dayKey(DateTime.now());
+    _openDay = _dayKey(DateTime.now());
     _save();
   }
+
+  /// Volver a la app desde segundo plano cuenta como una apertura nueva: sortea
+  /// otra paleta para "Al abrir" y, si cambió el día, vuelve a dar prioridad a
+  /// la temporada.
+  void newOpen() {
+    final today = _dayKey(DateTime.now());
+    firstOpenToday = _openDay != today;
+    _openDay = today;
+    launchPalette = launchPaletteAfter(launchPalette);
+    notifyListeners();
+    _save();
+  }
+
+  String? _openDay;
 
   void update(void Function(Settings s) change) {
     change(this);
