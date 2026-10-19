@@ -41,6 +41,7 @@ class Settings extends ChangeNotifier {
   Palette palette = Palette.papel;
   ThemeMode mode = ThemeMode.system;
   bool pureBlack = false;
+  bool dailyTheme = false;
   bool pauseOnUnplug = true;
   bool resumeSession = true;
   bool skipSilence = false;
@@ -49,6 +50,16 @@ class Settings extends ChangeNotifier {
   SongSort sort = SongSort.title;
 
   File? _file;
+
+  /// Paleta en uso: la elegida, o la del dia si "Tema del dia" esta activo.
+  // ponytail: se evalua al construir el tema; si la app queda abierta pasada la
+  // medianoche cambia en la proxima reconstruccion, no exactamente a las 00:00.
+  Palette get activePalette {
+    if (!dailyTheme) return palette;
+    final now = DateTime.now();
+    final dayOfYear = now.difference(DateTime(now.year)).inDays;
+    return Palette.values[dayOfYear % Palette.values.length];
+  }
 
   Future<void> load() async {
     _file = File('${(await getApplicationSupportDirectory()).path}/settings.json');
@@ -60,6 +71,7 @@ class Settings extends ChangeNotifier {
       scope = LibraryScope.values.asNameMap()[j['scope']] ?? scope;
       sort = SongSort.values.asNameMap()[j['sort']] ?? sort;
       pureBlack = j['pureBlack'] ?? pureBlack;
+      dailyTheme = j['dailyTheme'] ?? dailyTheme;
       pauseOnUnplug = j['pauseOnUnplug'] ?? pauseOnUnplug;
       resumeSession = j['resumeSession'] ?? resumeSession;
       skipSilence = j['skipSilence'] ?? skipSilence;
@@ -76,6 +88,7 @@ class Settings extends ChangeNotifier {
       'scope': scope.name,
       'sort': sort.name,
       'pureBlack': pureBlack,
+      'dailyTheme': dailyTheme,
       'pauseOnUnplug': pauseOnUnplug,
       'resumeSession': resumeSession,
       'skipSilence': skipSilence,

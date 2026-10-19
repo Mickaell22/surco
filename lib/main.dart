@@ -40,8 +40,8 @@ class SurcoApp extends StatelessWidget {
           title: 'Surco',
           debugShowCheckedModeBanner: false,
           themeMode: settings.mode,
-          theme: buildTheme(Brightness.light, settings.palette),
-          darkTheme: buildTheme(Brightness.dark, settings.palette, pureBlack: settings.pureBlack),
+          theme: buildTheme(Brightness.light, settings.activePalette),
+          darkTheme: buildTheme(Brightness.dark, settings.activePalette, pureBlack: settings.pureBlack),
           home: const Home(),
         ),
       );

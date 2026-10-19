@@ -23,8 +23,16 @@ class SettingsPage extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
             child: Wrap(spacing: 10, runSpacing: 10, children: [
-              for (final p in Palette.values) _Swatch(p, selected: settings.palette == p),
+              for (final p in Palette.values) _Swatch(p, selected: settings.activePalette == p),
             ]),
+          ),
+          _Toggle(
+            'Tema del dia',
+            settings.dailyTheme
+                ? 'Hoy toca ${settings.activePalette.label}. Manana cambia solo'
+                : 'Cada dia una paleta distinta',
+            settings.dailyTheme,
+            (v) => settings.update((x) => x.dailyTheme = v),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
@@ -181,7 +189,9 @@ class _Swatch extends StatelessWidget {
       button: true,
       label: 'Tema ${p.label}',
       child: InkWell(
-        onTap: () => settings.update((x) => x.palette = p),
+        onTap: () => settings.update((x) => x
+          ..palette = p
+          ..dailyTheme = false),
         borderRadius: BorderRadius.circular(14),
         child: Container(
           width: 104,
