@@ -34,9 +34,13 @@ class SettingsPage extends StatelessWidget {
             ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-            child: Wrap(spacing: 10, runSpacing: 10, children: [
-              for (final p in Palette.regular) _Swatch(p, selected: settings.activePalette == p),
-            ]),
+            // Tres columnas que llenan el ancho (un ancho fijo dejaba 2 y un hueco).
+            child: LayoutBuilder(builder: (_, c) {
+              final w = (c.maxWidth - 2 * 10) / 3;
+              return Wrap(spacing: 10, runSpacing: 10, children: [
+                for (final p in Palette.regular) _Swatch(p, width: w, selected: settings.activePalette == p),
+              ]);
+            }),
           ),
           const _Label('Cambiar de paleta sola'),
           Padding(
@@ -289,9 +293,10 @@ class _Toggle extends StatelessWidget {
 
 /// Muestra de paleta: fondo, tinta y acento reales del tema en el brillo actual.
 class _Swatch extends StatelessWidget {
-  const _Swatch(this.p, {required this.selected});
+  const _Swatch(this.p, {required this.selected, required this.width});
   final Palette p;
   final bool selected;
+  final double width;
 
   @override
   Widget build(BuildContext context) {
@@ -318,7 +323,7 @@ class _Swatch extends StatelessWidget {
         },
         borderRadius: BorderRadius.circular(14),
         child: Container(
-          width: 104,
+          width: width,
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             color: t.bg,
