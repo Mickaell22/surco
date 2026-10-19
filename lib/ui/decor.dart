@@ -64,9 +64,11 @@ class _DecorPainter extends CustomPainter {
     final v = t.value;
     switch (p) {
       case Palette.halloween:
-        _web(c, Offset(s.width, top - 4), 90, l.ink.withValues(alpha: .22));
-        _web(c, Offset(0, s.height), 70, l.ink.withValues(alpha: .14), flip: true);
-        _spider(c, Offset(s.width * .78, top), 58 + 16 * sin(v * 2 * pi * 2), v);
+        // Telarañas en las esquinas de la pantalla, lejos del contenido.
+        _web(c, Offset(s.width, 0), 120, l.ink.withValues(alpha: .2));
+        _web(c, Offset(0, s.height), 80, l.ink.withValues(alpha: .14), flip: true);
+        // La araña se balancea en el hueco libre de la fila "Aleatorio".
+        _spider(c, Offset(s.width * .62, top), 26 + 10 * sin(v * 2 * pi * 2), v);
         for (var i = 0; i < 2; i++) {
           final x = s.width * (1.15 - ((v + i * .5) % 1) * 1.3);
           _bat(c, Offset(x, top + 40 + i * 70 + 12 * sin((v + i) * 2 * pi * 3)), 10, v * 40 + i);
@@ -117,7 +119,9 @@ class _DecorPainter extends CustomPainter {
     // Radios desde la esquina hacia el interior de la pantalla.
     final base = flip ? -pi / 2 : pi / 2;
     final angles = [for (var i = 0; i <= 5; i++) base + i * (pi / 2) / 5];
-    Offset at(double a, double d) => corner + Offset(cos(a) * d * (flip ? 1 : -1), sin(a) * d * (flip ? 1 : 1));
+    // Esquina superior derecha: angulos pi/2..pi (hacia la izquierda y abajo);
+    // inferior izquierda: -pi/2..0 (hacia la derecha y arriba).
+    Offset at(double a, double d) => corner + Offset(cos(a), sin(a)) * d;
     for (final a in angles) {
       c.drawLine(corner, at(a, r), paint);
     }
@@ -149,19 +153,21 @@ class _DecorPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.6
       ..strokeCap = StrokeCap.round;
-    // Patas: cuatro por lado, con una rodilla, y un leve pataleo.
-    final wiggle = sin(v * 2 * pi * 6) * 1.5;
+    // Patas: cuatro por lado en abanico (de arriba-afuera a abajo-afuera), cada
+    // una con rodilla alta y pie hacia abajo, y un leve pataleo.
+    final wiggle = sin(v * 2 * pi * 6) * .12;
     for (var side = -1; side <= 1; side += 2) {
       for (var i = 0; i < 4; i++) {
-        final y = body.dy - 3 + i * 3.2;
-        final knee = Offset(body.dx + side * (9 + i), y - 6 + i * 2 + wiggle);
-        final foot = Offset(body.dx + side * (15 + i * 1.5), y + 3 + i * 2.5);
+        final ang = -0.9 + i * 0.55 + wiggle * (i.isEven ? 1 : -1);
+        final hip = body + Offset(side * 3.0, 1.0 + i * 1.5);
+        final knee = hip + Offset(side * cos(ang) * 10, sin(ang) * 10 - 4);
+        final foot = knee + Offset(side * 5, 8);
         c.drawPath(
-          Path()
-            ..moveTo(body.dx, y)
-            ..quadraticBezierTo(knee.dx, knee.dy, foot.dx, foot.dy),
-          outline,
-        );
+            Path()
+              ..moveTo(hip.dx, hip.dy)
+              ..lineTo(knee.dx, knee.dy)
+              ..lineTo(foot.dx, foot.dy),
+            outline);
       }
     }
     c.drawOval(Rect.fromCenter(center: body + const Offset(0, 4), width: 13, height: 15), ink);
