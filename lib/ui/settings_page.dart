@@ -5,7 +5,7 @@ import '../settings.dart';
 import '../theme.dart';
 import 'brand.dart';
 
-const appVersion = '1.1.0';
+const appVersion = '1.1.1';
 const repoUrl = 'github.com/Mickaell22/surco';
 
 class SettingsPage extends StatelessWidget {
@@ -20,6 +20,20 @@ class SettingsPage extends StatelessWidget {
         listenable: settings,
         builder: (context, _) => ListView(padding: const EdgeInsets.only(bottom: 32), children: [
           const _Section('Apariencia'),
+          if (settings.activePalette != settings.palette || settings.dailyTheme)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Row(children: [
+                Icon(Icons.auto_awesome_outlined, size: 18, color: l.accent),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Ahora manda ${settings.activePalette.label}${settings.activePalette.seasonal ? ' (temporada)' : ' (tema del dia)'}. Toca una paleta para usarla siempre.',
+                    style: TextStyle(fontSize: 13, color: l.inkSoft),
+                  ),
+                ),
+              ]),
+            ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
             child: Wrap(spacing: 10, runSpacing: 10, children: [
@@ -243,9 +257,26 @@ class _Swatch extends StatelessWidget {
       button: true,
       label: 'Tema ${p.label}',
       child: InkWell(
-        onTap: () => settings.update((x) => x
-          ..palette = p
-          ..dailyTheme = false),
+        onTap: () {
+          // Elegir una paleta es decir "quiero esta": apaga lo automatico para
+          // que no parezca que el toque no hizo nada.
+          final overridden = settings.activePalette != settings.palette || settings.dailyTheme;
+          settings.update((x) => x
+            ..palette = p
+            ..dailyTheme = false
+            ..seasonalThemes = false);
+          if (overridden) {
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(SnackBar(
+                content: Text('Usando ${p.label}. Tema del dia y de temporada desactivados.'),
+                action: SnackBarAction(
+                  label: 'Deshacer',
+                  onPressed: () => settings.update((x) => x.seasonalThemes = true),
+                ),
+              ));
+          }
+        },
         borderRadius: BorderRadius.circular(14),
         child: Container(
           width: 104,
