@@ -90,11 +90,11 @@ class SongTile extends StatelessWidget {
 
 /// Fila de grupo (artista, album o lista) con conteo.
 class GroupTile extends StatelessWidget {
-  const GroupTile({super.key, required this.title, required this.songs, required this.onTap, this.icon});
+  const GroupTile({super.key, required this.title, required this.songs, required this.onTap, this.art});
   final String title;
   final List<Song> songs;
   final VoidCallback onTap;
-  final IconData? icon;
+  final Widget? art;
 
   @override
   Widget build(BuildContext context) {
@@ -106,14 +106,7 @@ class GroupTile extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(children: [
-          icon == null
-              ? Cover(withCover, size: 52, radius: 10)
-              : Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(color: l.accentSoft, borderRadius: BorderRadius.circular(10)),
-                  child: Icon(icon, color: l.accent),
-                ),
+          art ?? Cover(withCover, size: 52, radius: 10),
           const SizedBox(width: 14),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

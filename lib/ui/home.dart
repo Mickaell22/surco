@@ -4,9 +4,14 @@ import 'package:permission_handler/permission_handler.dart';
 
 import '../library.dart';
 import '../main.dart';
+import '../settings.dart';
+import '../smart.dart';
 import '../theme.dart';
+import 'brand.dart';
 import 'now_playing.dart';
+import 'settings_page.dart';
 import 'song_actions.dart';
+import 'stats_page.dart';
 import 'widgets.dart';
 
 class Home extends StatefulWidget {
@@ -32,7 +37,7 @@ class _HomeState extends State<Home> {
     final ok = audio.isGranted || (await Permission.storage.request()).isGranted;
     await Permission.notification.request();
     setState(() => _granted = ok);
-    if (ok) library.load();
+    if (ok) library.load(onReady: () => player.restoreSession(library.byPath));
   }
 
   @override
@@ -59,7 +64,7 @@ class _HomeState extends State<Home> {
                   onChanged: (v) => setState(() => _query = v.trim().toLowerCase()),
                   decoration: const InputDecoration(hintText: 'Buscar cancion, artista o album', isDense: true),
                 )
-              : const Text('Surco'),
+              : const Wordmark(),
           actions: [
             IconButton(
               tooltip: _searching ? 'Cerrar busqueda' : 'Buscar',
@@ -69,15 +74,19 @@ class _HomeState extends State<Home> {
                 _query = '';
               }),
             ),
-            ListenableBuilder(
-              listenable: library,
-              builder: (_, _) => IconButton(
-                tooltip: 'Volver a escanear',
-                onPressed: library.scanning ? null : library.scan,
-                icon: library.scanning
-                    ? SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2, color: l.muted))
-                    : const Icon(Icons.refresh_rounded),
-              ),
+            PopupMenuButton<String>(
+              tooltip: 'Mas opciones',
+              icon: const Icon(Icons.more_vert_rounded),
+              onSelected: (v) => switch (v) {
+                'stats' => Navigator.push(context, MaterialPageRoute(builder: (_) => const StatsPage())),
+                'settings' => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsPage())),
+                _ => library.scan(),
+              },
+              itemBuilder: (_) => const [
+                PopupMenuItem(value: 'stats', child: ListTile(leading: Icon(Icons.insights_outlined), title: Text('Estadisticas'))),
+                PopupMenuItem(value: 'settings', child: ListTile(leading: Icon(Icons.tune_rounded), title: Text('Configuracion'))),
+                PopupMenuItem(value: 'scan', child: ListTile(leading: Icon(Icons.refresh_rounded), title: Text('Volver a escanear'))),
+              ],
             ),
             const SizedBox(width: 4),
           ],
@@ -96,7 +105,7 @@ class _HomeState extends State<Home> {
                 ),
         ),
         body: ListenableBuilder(
-          listenable: library,
+          listenable: Listenable.merge([library, stats, settings]),
           builder: (context, _) {
             if (library.songs.isEmpty) {
               return library.scanning || _granted == null
@@ -104,16 +113,23 @@ class _HomeState extends State<Home> {
                   : EmptyState(
                       icon: Icons.library_music_outlined,
                       title: 'No hay musica todavia',
-                      body: 'Copia tus canciones a la carpeta Music o Download del telefono y toca actualizar.',
+                      body: library.error != null
+                          ? 'No se pudo leer la musica: ${library.error}'
+                          : 'Copia tus canciones a la carpeta Music o Download del telefono y toca actualizar.',
                       action: OutlinedButton(onPressed: library.scan, child: const Text('Buscar de nuevo')),
                     );
             }
-            if (_searching) return _SongList(_filter(library.songs));
-            return TabBarView(children: [
-              _SongList(library.songs, showShuffle: true),
-              _Groups(library.byArtist),
-              _Groups(library.byAlbum),
-              _Playlists(),
+            final body = _searching
+                ? _SongList(_filter(library.songs))
+                : TabBarView(children: [
+                    _SongList(sortSongs(library.songs, settings.sort, stats.playCounts()), showShuffle: true, showSort: true),
+                    _Groups(library.byArtist),
+                    _Groups(library.byAlbum),
+                    _Playlists(),
+                  ]);
+            return Column(children: [
+              if (library.scanning) LinearProgressIndicator(minHeight: 2, color: l.accent, backgroundColor: l.line),
+              Expanded(child: body),
             ]);
           },
         ),
@@ -133,9 +149,9 @@ class _HomeState extends State<Home> {
 }
 
 class _SongList extends StatelessWidget {
-  const _SongList(this.songs, {this.showShuffle = false});
+  const _SongList(this.songs, {this.showShuffle = false, this.showSort = false});
   final List<Song> songs;
-  final bool showShuffle;
+  final bool showShuffle, showSort;
 
   @override
   Widget build(BuildContext context) {
@@ -152,7 +168,7 @@ class _SongList extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 8),
           itemCount: songs.length + (showShuffle ? 1 : 0),
           itemBuilder: (context, i) {
-            if (showShuffle && i == 0) return ShuffleRow(songs);
+            if (showShuffle && i == 0) return ShuffleRow(songs, showSort: showSort);
             final s = songs[i - (showShuffle ? 1 : 0)];
             return SongTile(
               song: s,
@@ -168,8 +184,9 @@ class _SongList extends StatelessWidget {
 }
 
 class ShuffleRow extends StatelessWidget {
-  const ShuffleRow(this.songs, {super.key});
+  const ShuffleRow(this.songs, {super.key, this.showSort = false});
   final List<Song> songs;
+  final bool showSort;
 
   @override
   Widget build(BuildContext context) {
@@ -177,7 +194,7 @@ class ShuffleRow extends StatelessWidget {
     return InkWell(
       onTap: () => player.playList(songs, 0, shuffle: true),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.only(left: 16, right: 4),
         child: Row(children: [
           Container(
             width: 48,
@@ -186,9 +203,28 @@ class ShuffleRow extends StatelessWidget {
             child: Icon(Icons.shuffle_rounded, color: l.accent),
           ),
           const SizedBox(width: 14),
-          Text('Aleatorio', style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, color: l.ink)),
+          Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Aleatorio', style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, color: l.ink)),
+            Text('${songs.length} canciones', style: TextStyle(fontSize: 13, color: l.muted, fontFeatures: tabular)),
+          ]),
           const Spacer(),
-          Text('${songs.length} canciones', style: TextStyle(fontSize: 13, color: l.muted, fontFeatures: tabular)),
+          if (showSort)
+            PopupMenuButton<SongSort>(
+              tooltip: 'Ordenar',
+              initialValue: settings.sort,
+              onSelected: (v) => settings.update((x) => x.sort = v),
+              itemBuilder: (_) => [for (final o in SongSort.values) PopupMenuItem(value: o, child: Text(o.label))],
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(Icons.sort_rounded, size: 18, color: l.inkSoft),
+                  const SizedBox(width: 6),
+                  Text(settings.sort.label, style: TextStyle(fontSize: 13.5, color: l.inkSoft)),
+                ]),
+              ),
+            )
+          else
+            const SizedBox(width: 12),
         ]),
       ),
     );
@@ -217,41 +253,101 @@ class _Groups extends StatelessWidget {
 class _Playlists extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    if (library.playlists.isEmpty) {
-      return const EmptyState(
-        icon: Icons.queue_music_rounded,
-        title: 'Sin listas',
-        body: 'Surco lee archivos .m3u que esten junto a tu musica. Cada archivo aparece aqui como una lista.',
-      );
-    }
-    return ListView.builder(
-      itemExtent: 68,
-      itemCount: library.playlists.length,
-      itemBuilder: (context, i) {
-        final p = library.playlists[i];
-        return GroupTile(
+    final l = Ledger.of(context);
+    final auto = smartPlaylists(library, stats);
+    final mine = library.playlists;
+    Widget row(Playlist p, {bool keepOrder = true}) => GroupTile(
           title: p.name,
           songs: p.songs,
-          icon: Icons.queue_music_rounded,
-          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => GroupPage(p.name, p.songs, keepOrder: true))),
+          art: PlaylistArt(name: p.name, songs: p.songs),
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => GroupPage(p.name, p.songs, playlist: true))),
         );
-      },
-    );
+    Widget header(String t) => Padding(
+          padding: const EdgeInsets.fromLTRB(16, 18, 16, 6),
+          child: Text(t.toUpperCase(),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 1.1, color: l.muted)),
+        );
+    return ListView(padding: const EdgeInsets.only(bottom: 8), children: [
+      header('Hechas para ti'),
+      for (final p in auto) SizedBox(height: 68, child: row(p)),
+      header('Tus listas'),
+      if (mine.isEmpty)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+          child: Text('Surco lee archivos .m3u que esten junto a tu musica. Cada archivo aparece aqui como una lista.',
+              style: TextStyle(fontSize: 14, height: 1.45, color: l.inkSoft)),
+        ),
+      for (final p in mine) SizedBox(height: 68, child: row(p)),
+    ]);
   }
 }
 
 class GroupPage extends StatelessWidget {
-  const GroupPage(this.title, this.songs, {super.key, this.keepOrder = false});
+  const GroupPage(this.title, this.songs, {super.key, this.playlist = false});
   final String title;
   final List<Song> songs;
-  final bool keepOrder;
+  final bool playlist;
 
   @override
   Widget build(BuildContext context) {
+    final l = Ledger.of(context);
+    final total = songs.fold<int>(0, (a, s) => a + s.durationMs);
+    final withCover = songs.where((s) => s.cover != null).firstOrNull ?? songs.firstOrNull;
     return Scaffold(
-      appBar: AppBar(title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis)),
-      body: _SongList(songs, showShuffle: true),
+      appBar: AppBar(),
       bottomNavigationBar: const MiniPlayer(),
+      body: ListenableBuilder(
+        listenable: player,
+        builder: (context, _) => CustomScrollView(slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                playlist ? PlaylistArt(name: title, songs: songs, size: 112) : Cover(withCover, size: 112, radius: 14),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text(title,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: -.4, color: l.ink)),
+                    const SizedBox(height: 4),
+                    Text('${songs.length} canciones · ${fmtDur(Duration(milliseconds: total))}',
+                        style: TextStyle(fontSize: 13.5, color: l.inkSoft, fontFeatures: tabular)),
+                    const SizedBox(height: 12),
+                    Row(children: [
+                      FilledButton.icon(
+                        onPressed: songs.isEmpty ? null : () => player.playList(songs, 0),
+                        icon: const Icon(Icons.play_arrow_rounded),
+                        label: const Text('Reproducir'),
+                        style: FilledButton.styleFrom(backgroundColor: l.ink, foregroundColor: l.bg),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton.outlined(
+                        tooltip: 'Aleatorio',
+                        onPressed: songs.isEmpty ? null : () => player.playList(songs, 0, shuffle: true),
+                        icon: Icon(Icons.shuffle_rounded, color: l.ink),
+                      ),
+                    ]),
+                  ]),
+                ),
+              ]),
+            ),
+          ),
+          SliverFixedExtentList(
+            itemExtent: 64,
+            delegate: SliverChildBuilderDelegate(
+              childCount: songs.length,
+              (context, i) => SongTile(
+                song: songs[i],
+                playing: songs[i].path == player.current?.path,
+                onTap: () => player.playList(songs, i),
+                onMore: () => showSongActions(context, songs[i]),
+              ),
+            ),
+          ),
+        ]),
+      ),
     );
   }
 }
