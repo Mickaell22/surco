@@ -5,7 +5,7 @@ import '../settings.dart';
 import '../theme.dart';
 import 'brand.dart';
 
-const appVersion = '1.0.0';
+const appVersion = '1.1.0';
 const repoUrl = 'github.com/Mickaell22/surco';
 
 class SettingsPage extends StatelessWidget {
@@ -23,16 +23,58 @@ class SettingsPage extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
             child: Wrap(spacing: 10, runSpacing: 10, children: [
-              for (final p in Palette.values) _Swatch(p, selected: settings.activePalette == p),
+              for (final p in Palette.regular) _Swatch(p, selected: settings.palette == p && !settings.dailyTheme),
             ]),
           ),
           _Toggle(
             'Tema del dia',
             settings.dailyTheme
-                ? 'Hoy toca ${settings.activePalette.label}. Manana cambia solo'
-                : 'Cada dia una paleta distinta',
+                ? 'Hoy toco ${dailyPalette(DateTime.now()).label}. Manana sale otra al azar'
+                : 'Cada dia una paleta al azar',
             settings.dailyTheme,
             (v) => settings.update((x) => x.dailyTheme = v),
+          ),
+          _Toggle(
+            'Temas de temporada',
+            _seasonHint(),
+            settings.seasonalThemes,
+            (v) => settings.update((x) => x.seasonalThemes = v),
+          ),
+          ListTile(
+            leading: Icon(Icons.cake_outlined, color: l.inkSoft),
+            title: Text('Tu cumpleanos', style: TextStyle(color: l.ink)),
+            subtitle: Text(
+              settings.birthdayMonth == null
+                  ? 'Ese dia Surco se pone de fiesta'
+                  : '${settings.birthdayDay} de ${_months[settings.birthdayMonth! - 1]}',
+              style: TextStyle(color: l.inkSoft),
+            ),
+            trailing: settings.birthdayMonth == null
+                ? null
+                : IconButton(
+                    tooltip: 'Quitar cumpleanos',
+                    icon: Icon(Icons.close_rounded, color: l.muted),
+                    onPressed: () => settings.update((x) => x
+                      ..birthdayMonth = null
+                      ..birthdayDay = null),
+                  ),
+            onTap: () async {
+              final now = DateTime.now();
+              final d = await showDatePicker(
+                context: context,
+                helpText: 'Elige tu cumpleanos (el ano no importa)',
+                firstDate: DateTime(now.year),
+                lastDate: DateTime(now.year, 12, 31),
+                initialDate: settings.birthdayMonth == null
+                    ? now
+                    : DateTime(now.year, settings.birthdayMonth!, settings.birthdayDay!),
+              );
+              if (d != null) {
+                settings.update((x) => x
+                  ..birthdayMonth = d.month
+                  ..birthdayDay = d.day);
+              }
+            },
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
@@ -141,6 +183,18 @@ class SettingsPage extends StatelessWidget {
       ),
     );
   }
+}
+
+const _months = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto',
+    'septiembre', 'octubre', 'noviembre', 'diciembre'];
+
+String _seasonHint() {
+  final now = DateTime.now();
+  if (settings.seasonalThemes && settings.isBirthday(now)) return 'Hoy es tu cumpleanos: modo fiesta';
+  final s = seasonFor(now);
+  return s == null
+      ? 'Halloween, Dia de Muertos, Navidad, Ano Nuevo y San Valentin se aplican solos'
+      : 'Ahora mismo: ${s.label}';
 }
 
 class _Section extends StatelessWidget {
