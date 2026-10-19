@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../library.dart';
+import '../main.dart';
+import '../settings.dart';
 import '../theme.dart';
 
 /// Marca de Surco: un disco visto de frente. Los surcos son arcos abiertos (no
@@ -58,6 +60,10 @@ class Wordmark extends StatelessWidget {
       const SurcoMark(size: 26),
       const SizedBox(width: 10),
       Text('surco', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, letterSpacing: -.8, color: l.ink)),
+      if (seasonIcon(settings.activePalette) case final icon?) ...[
+        const SizedBox(width: 6),
+        Icon(icon, size: 18, color: l.accent),
+      ],
     ]);
   }
 }
@@ -125,3 +131,14 @@ class PlaylistArt extends StatelessWidget {
     );
   }
 }
+
+/// Pequeno guino junto al logo cuando hay un tema de temporada activo.
+IconData? seasonIcon(Palette p) => switch (p) {
+      Palette.halloween => Icons.nights_stay_outlined,
+      Palette.muertos => Icons.local_florist_outlined,
+      Palette.navidad => Icons.park_outlined,
+      Palette.anioNuevo => Icons.celebration_outlined,
+      Palette.sanValentin => Icons.favorite_rounded,
+      Palette.cumple => Icons.cake_outlined,
+      _ => null,
+    };

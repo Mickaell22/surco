@@ -129,6 +129,20 @@ class _HomeState extends State<Home> {
                   ]);
             return Column(children: [
               if (library.scanning) LinearProgressIndicator(minHeight: 2, color: l.accent, backgroundColor: l.line),
+              if (settings.seasonalThemes && settings.isBirthday(DateTime.now()))
+                Container(
+                  width: double.infinity,
+                  color: l.accentSoft,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  child: Row(children: [
+                    Icon(Icons.cake_outlined, color: l.accent, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text('Feliz cumpleanos. Hoy suena lo que tu quieras.',
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: l.ink)),
+                    ),
+                  ]),
+                ),
               Expanded(child: body),
             ]);
           },
