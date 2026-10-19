@@ -70,4 +70,5 @@ Reproductor de música local para Android en Flutter. Repo **público** `github.
 - **Personalización**: tamaño de letra, forma de portadas, densidad de lista, acento a elección, estilo del reproductor.
 - **Sincronizar la música** subida a algún lado para usarla en otros dispositivos (anotado para después, sin diseño todavía).
 - README: el título (`docs/screenshots/title.svg`) tiene fondo **transparente** (una tarjeta clara se veía como un bloque blanco en GitHub oscuro) y colores que se leen sobre claro y oscuro: wordmark en el acento, subtítulo gris medio, disco con aro claro. No volver a `<picture>`. Verificar el primer cuadro con `rsvg-convert -b '#ffffff'` y `-b '#0d1117'` antes de publicar.
+- Cuando estén las decoraciones nuevas, rehacer las capturas del README sumando una con un tema de temporada decorado (hoy son 2, de la 1.2.0: Listas y Configuración).
 - Capturas del README: sin portadas de discos (repo público) ni barra de estado; recortar el mini reproductor.
