@@ -2,6 +2,16 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); las versiones siguen [SemVer](https://semver.org/lang/es/).
 
+## [1.2.1] - 2026-10-19
+
+### Cambiado
+- En "Al abrir", durante una temporada, el tema festivo sale en la mitad de las aperturas (antes solo en la primera del día).
+
+### Corregido
+- Volver a Surco desde segundo plano ahora cuenta como una apertura: "Al abrir" cambia de paleta aunque Android no haya cerrado la app.
+- Los botones de aleatorio y repetir cambian de color al tocarlos.
+- Al cambiar de pestaña, cada lista vuelve a donde la dejaste en vez de saltar al inicio.
+
 ## [1.2.0] - 2026-10-19
 
 ### Agregado
