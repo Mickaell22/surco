@@ -6,6 +6,8 @@ import 'package:audio_metadata_reader/audio_metadata_reader.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'settings.dart';
+
 const audioExt = {'.mp3', '.m4a', '.aac', '.flac', '.ogg', '.opus', '.wav'};
 const playlistExt = {'.m3u', '.m3u8'};
 
@@ -50,7 +52,11 @@ class Playlist {
 /// Biblioteca local: escanea el almacenamiento, guarda una cache JSON y
 /// solo re-lee los archivos nuevos o modificados.
 class Library extends ChangeNotifier {
+  Library(this.settings);
+  final Settings settings;
+
   List<Song> songs = [];
+  Map<String, Song> byPath = {};
   List<Playlist> playlists = [];
   bool scanning = false;
   String? error;
@@ -58,16 +64,22 @@ class Library extends ChangeNotifier {
   late final Directory _cacheDir;
   File get _cacheFile => File('${_cacheDir.path}/library.json');
 
-  Future<void> load() async {
+  /// [onReady] corre apenas hay canciones (de la cache o del primer escaneo),
+  /// para retomar la sesion sin esperar a que termine de revisar el almacenamiento.
+  Future<void> load({VoidCallback? onReady}) async {
     _cacheDir = await getApplicationSupportDirectory();
     if (await _cacheFile.exists()) {
       try {
         final raw = jsonDecode(await _cacheFile.readAsString()) as List;
         songs = raw.map((e) => Song.fromJson(e)).toList();
+        byPath = {for (final s in songs) s.path: s};
         notifyListeners();
       } catch (_) {/* cache corrupta: se reconstruye en el scan */}
     }
+    final hadCache = songs.isNotEmpty;
+    if (hadCache) onReady?.call();
     await scan();
+    if (!hadCache) onReady?.call();
   }
 
   Future<void> scan() async {
@@ -78,9 +90,13 @@ class Library extends ChangeNotifier {
     try {
       final known = {for (final s in songs) s.path: s};
       final coverDir = '${_cacheDir.path}/covers';
-      final result = await Isolate.run(() => _scanIsolate(_roots, known, coverDir));
-      songs = result.$1..sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
-      final byPath = {for (final s in songs) s.path: s};
+      final roots = settings.scope == LibraryScope.all ? _rootAll : _rootsMusic;
+      final result = await _runScan(roots, known, coverDir);
+      songs = result.$1
+          .where((s) => !settings.ignoreShort || s.durationMs == 0 || s.durationMs >= 30000)
+          .toList()
+        ..sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+      byPath = {for (final s in songs) s.path: s};
       playlists = [
         for (final p in result.$2) _readPlaylist(p, byPath),
       ].where((p) => p.songs.isNotEmpty).toList()
@@ -114,10 +130,22 @@ class Library extends ChangeNotifier {
       });
 }
 
-// ponytail: raiz fija del almacenamiento compartido de Android. Si algun dia
+// ponytail: rutas fijas del almacenamiento compartido de Android. Si algun dia
 // hace falta una SD externa, se agrega aqui (o un selector de carpetas).
-const _roots = ['/storage/emulated/0'];
-const _skipDirs = {'Android', 'DCIM', 'Pictures', 'Movies'};
+const _rootsMusic = ['/storage/emulated/0/Music', '/storage/emulated/0/Download'];
+const _rootAll = ['/storage/emulated/0'];
+
+/// Carpetas que nunca son musica: notas de voz, grabaciones, tonos del sistema.
+const _skipDirs = {
+  'android', 'dcim', 'pictures', 'movies', 'whatsapp', 'telegram', 'recordings',
+  'call', 'callrecordings', 'callrecord', 'phonerecord', 'record', 'recorder', 'voicerecorder', 'voice recorder', 'soundrecorder', 'ringtones', 'notifications',
+  'alarms', 'audiobooks', 'podcasts', 'whatsapp audio', 'whatsapp voice notes', 'voice notes',
+};
+
+/// Fuera de la clase a proposito: un closure de Isolate.run creado dentro de un
+/// metodo de Library puede arrastrar `this` (no enviable) y romper el escaneo.
+Future<(List<Song>, List<String>)> _runScan(List<String> roots, Map<String, Song> known, String coverDir) =>
+    Isolate.run(() => _scanIsolate(roots, known, coverDir));
 
 (List<Song>, List<String>) _scanIsolate(List<String> roots, Map<String, Song> known, String coverDir) {
   Directory(coverDir).createSync(recursive: true);
@@ -135,7 +163,7 @@ const _skipDirs = {'Android', 'DCIM', 'Pictures', 'Movies'};
       final name = e.uri.pathSegments.where((p) => p.isNotEmpty).last;
       if (name.startsWith('.')) continue;
       if (e is Directory) {
-        if (depth == 0 && _skipDirs.contains(name)) continue;
+        if (_skipDirs.contains(name.toLowerCase())) continue;
         if (depth < 8) walk(e, depth + 1);
       } else if (e is File) {
         final ext = _ext(name);
