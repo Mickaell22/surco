@@ -163,6 +163,10 @@ class Settings extends ChangeNotifier {
   /// siguientes siguen la rotacion (con rotacion "Fija" la temporada se queda).
   bool firstOpenToday = true;
 
+  /// En "Al abrir" y en temporada, cada apertura tira una moneda: con cara sale
+  /// el tema festivo aunque no sea la primera del día (antes salía muy poco).
+  bool seasonDraw = false;
+
   File? _file;
 
   /// Paleta en uso.
@@ -177,7 +181,8 @@ class Settings extends ChangeNotifier {
     if (seasonalThemes && isBirthday(d)) return Palette.cumple;
     final season = seasonalThemes ? seasonFor(d) : null;
     final today = _dayKey(d) == _dayKey(DateTime.now());
-    if (season != null && (rotation == ThemeRotation.fixed || firstOpenToday || !today)) return season;
+    final launchSeason = rotation == ThemeRotation.launch && seasonDraw;
+    if (season != null && (rotation == ThemeRotation.fixed || firstOpenToday || launchSeason || !today)) return season;
     return switch (rotation) {
       ThemeRotation.fixed => null,
       ThemeRotation.daily => dailyPalette(d),
@@ -242,6 +247,7 @@ class Settings extends ChangeNotifier {
       } catch (_) {/* archivo corrupto: quedan los valores por defecto */}
     }
     launchPalette = launchPaletteAfter(lastLaunch);
+    seasonDraw = Random().nextBool();
     firstOpenToday = lastOpenDay != _dayKey(DateTime.now());
     _openDay = _dayKey(DateTime.now());
     _save();
@@ -255,6 +261,7 @@ class Settings extends ChangeNotifier {
     firstOpenToday = _openDay != today;
     _openDay = today;
     launchPalette = launchPaletteAfter(launchPalette);
+    seasonDraw = Random().nextBool();
     notifyListeners();
     _save();
   }

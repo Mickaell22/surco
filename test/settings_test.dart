@@ -94,4 +94,16 @@ void main() {
     expect(s.firstOpenToday, isFalse);
     expect(s.launchPalette, isNot(antes));
   });
+
+  test('al abrir en temporada: la moneda decide si sale el tema festivo', () {
+    final s = Settings()
+      ..rotation = ThemeRotation.launch
+      ..firstOpenToday = false;
+    final hoy = DateTime.now();
+    final enTemporada = seasonFor(hoy);
+    s.seasonDraw = true;
+    expect(s.autoPaletteFor(hoy), enTemporada ?? s.launchPalette);
+    s.seasonDraw = false;
+    expect(s.autoPaletteFor(hoy), s.launchPalette);
+  });
 }
