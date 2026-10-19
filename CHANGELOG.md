@@ -18,6 +18,8 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); l
 ### Corregido
 - El aviso de cambio de paleta ya no se queda fijo en pantalla.
 - El final de las listas y de Configuración ya no queda debajo de la barra de navegación de Android.
+- Las muestras de paleta llenan el ancho en tres columnas.
+- Carnaval y otras fechas móviles se calculaban un día corrido por el cambio de horario.
 
 ## [1.1.1] - 2026-10-19
 
