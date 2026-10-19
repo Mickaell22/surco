@@ -15,7 +15,8 @@ class Cover extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = Ledger.of(context);
-    final px = (size * MediaQuery.devicePixelRatioOf(context)).round();
+    // Tope de 720 px: la portada grande se ve igual y pesa una cuarta parte.
+    final px = (size * MediaQuery.devicePixelRatioOf(context)).round().clamp(1, 720);
     final path = song?.cover;
     return ClipRRect(
       borderRadius: BorderRadius.circular(radius),

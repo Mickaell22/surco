@@ -26,6 +26,9 @@ Future<void> main() async {
     artDownscaleHeight: 256,
   );
   await Future.wait([settings.load(), stats.load()]);
+  // La cache de imagenes de Flutter guarda hasta 100 MB por defecto; con
+  // miniaturas de ~130 px, 24 MB cubren varias pantallas de portadas.
+  PaintingBinding.instance.imageCache.maximumSizeBytes = 24 << 20;
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   runApp(const SurcoApp());
 }
