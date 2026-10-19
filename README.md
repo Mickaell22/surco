@@ -61,7 +61,7 @@ Requiere Android 5.0 o superior. Android te pedirá permitir "instalar apps de o
 
 ## Estadísticas y listas automáticas
 
-Surco cuenta una escucha cuando oyes al menos 30 segundos (o la mitad, si la canción es corta). Con eso muestra:
+Surco cuenta una escucha con la regla de Last.fm: cuando la oyes hasta **la mitad o 4 minutos**, lo que llegue primero. Saltar una canción que no te gusta no suma, y adelantar con la barra no infla el tiempo (se mide lo que de verdad sonó). Con eso muestra:
 
 - Tiempo escuchado, número de escuchas y canciones distintas en 7 días, 30 días o desde siempre.
 - Minutos por día de la semana.

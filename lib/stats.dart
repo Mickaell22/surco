@@ -43,9 +43,13 @@ class Stats extends ChangeNotifier {
     } catch (_) {}
   }
 
-  /// Cuenta como escucha si se oyo 30 s o la mitad de la cancion (lo que sea menor).
+  /// Regla de Last.fm: cuenta si se oyo la mitad de la cancion o 4 minutos (lo
+  /// que llegue primero). Saltar una cancion que no gusta no la suma. Pistas de
+  /// menos de 30 s nunca cuentan. Si no se conoce la duracion, exige 4 minutos.
+  /// [listenedMs] es tiempo realmente sonado: adelantar con la barra no lo infla.
   void record(Song s, DateTime at, int listenedMs) {
-    final threshold = s.durationMs > 0 ? (s.durationMs ~/ 2).clamp(1, 30000) : 30000;
+    if (s.durationMs > 0 && s.durationMs < 30000) return;
+    final threshold = s.durationMs > 0 ? (s.durationMs ~/ 2).clamp(0, 240000) : 240000;
     if (listenedMs < threshold) return;
     events.add(PlayEvent(s.path, at, listenedMs));
     notifyListeners();

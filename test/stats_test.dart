@@ -8,12 +8,13 @@ Song song(String p, {int ms = 200000, int mtime = 0, String artist = 'A'}) =>
     Song(path: p, mtime: mtime, title: p, artist: artist, album: 'X', durationMs: ms);
 
 void main() {
-  test('una escucha cuenta con 30 s o la mitad de una cancion corta', () {
+  test('una escucha cuenta con la mitad o 4 minutos, no al saltarla', () {
     final st = Stats();
-    st.record(song('larga'), DateTime.now(), 29000);
-    st.record(song('larga'), DateTime.now(), 30000);
-    st.record(song('corta', ms: 40000), DateTime.now(), 20000);
-    expect(st.events.map((e) => e.path), ['larga', 'corta']);
+    st.record(song('saltada'), DateTime.now(), 60000); // 1 min de 3:20: no cuenta
+    st.record(song('mitad'), DateTime.now(), 100000); // justo la mitad: cuenta
+    st.record(song('larga', ms: 600000), DateTime.now(), 240000); // 4 min de 10: cuenta
+    st.record(song('jingle', ms: 20000), DateTime.now(), 20000); // menos de 30 s: nunca
+    expect(st.events.map((e) => e.path), ['mitad', 'larga']);
   });
 
   test('ranking por escuchas, respetando la ventana de tiempo', () {
@@ -21,9 +22,9 @@ void main() {
     final byPath = {'a': a, 'b': b};
     final st = Stats();
     final viejo = DateTime.now().subtract(const Duration(days: 20));
-    st.record(a, viejo, 60000);
-    st.record(a, viejo, 60000);
-    st.record(b, DateTime.now(), 60000);
+    st.record(a, viejo, 120000);
+    st.record(a, viejo, 120000);
+    st.record(b, DateTime.now(), 120000);
     expect(st.topSongs(byPath).first.song.path, 'a');
     expect(st.topSongs(byPath, window: const Duration(days: 7)).single.song.path, 'b');
     expect(st.topArtists(byPath).first.name, 'A');

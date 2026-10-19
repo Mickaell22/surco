@@ -54,7 +54,7 @@ class _StatsPageState extends State<StatsPage> {
                 child: EmptyState(
                   icon: Icons.insights_outlined,
                   title: 'Aun no hay escuchas',
-                  body: 'Cuenta una escucha cuando oyes al menos 30 segundos (o la mitad si la cancion es corta).',
+                  body: 'Una cancion cuenta cuando la escuchas hasta la mitad o 4 minutos. Saltarla antes no suma.',
                 ),
               )
             else ...[
