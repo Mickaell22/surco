@@ -147,9 +147,10 @@ class _HomeState extends State<Home> {
                             sortSongs(library.songs, settings.sort, stats.playCounts()),
                             showShuffle: true,
                             showSort: true,
+                            storageKey: 'canciones',
                           ),
-                          _Groups(library.byArtist),
-                          _Groups(library.byAlbum),
+                          _Groups(library.byArtist, 'artistas'),
+                          _Groups(library.byAlbum, 'albumes'),
                           _Playlists(),
                         ],
                       );
@@ -206,8 +207,10 @@ class _HomeState extends State<Home> {
 }
 
 class _SongList extends StatelessWidget {
-  const _SongList(this.songs, {this.showShuffle = false, this.showSort = false});
+  const _SongList(this.songs, {this.showShuffle = false, this.showSort = false, this.storageKey});
   final List<Song> songs;
+  // Guarda la posición del scroll: TabBarView destruye la pestaña que no se ve.
+  final String? storageKey;
   final bool showShuffle, showSort;
 
   @override
@@ -224,6 +227,7 @@ class _SongList extends StatelessWidget {
       builder: (context, _) {
         final current = player.current?.path;
         return ListView.builder(
+          key: storageKey == null ? null : PageStorageKey(storageKey),
           // itemExtent fijo: el scroll no mide cada fila (mas fluido, menos trabajo).
           itemExtent: 64,
           padding: const EdgeInsets.only(bottom: 8),
@@ -308,13 +312,15 @@ class ShuffleRow extends StatelessWidget {
 }
 
 class _Groups extends StatelessWidget {
-  const _Groups(this.groups);
+  const _Groups(this.groups, this.storageKey);
   final Map<String, List<Song>> groups;
+  final String storageKey;
 
   @override
   Widget build(BuildContext context) {
     final keys = groups.keys.toList();
     return ListView.builder(
+      key: PageStorageKey(storageKey),
       itemExtent: 68,
       itemCount: keys.length,
       itemBuilder: (context, i) => GroupTile(
@@ -347,6 +353,7 @@ class _Playlists extends StatelessWidget {
       ),
     );
     return ListView(
+      key: const PageStorageKey('listas'),
       padding: const EdgeInsets.only(bottom: 8),
       children: [
         header('Hechas para ti'),
