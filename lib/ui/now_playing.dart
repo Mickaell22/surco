@@ -344,6 +344,7 @@ void _queueSheet(BuildContext context) {
             Expanded(
               child: ListView.builder(
                 controller: scroll,
+                padding: EdgeInsets.only(bottom: MediaQuery.paddingOf(context).bottom),
                 itemExtent: 64,
                 itemCount: order.length,
                 itemBuilder: (_, i) {

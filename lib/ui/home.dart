@@ -376,7 +376,9 @@ class MiniPlayer extends StatelessWidget {
       listenable: player,
       builder: (context, _) {
         final s = player.current;
-        if (s == null) return const SizedBox.shrink();
+        // Sin cancion igual reserva la barra de navegacion de Android (la app es
+        // de borde a borde): si no, el final de las listas queda tapado.
+        if (s == null) return SizedBox(height: MediaQuery.paddingOf(context).bottom);
         return Material(
           color: l.surfaceAlt,
           child: SafeArea(
