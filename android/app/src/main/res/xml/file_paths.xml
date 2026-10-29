@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Carpetas que Surco puede pasar a otras apps (compartir pistas). -->
+<paths>
+    <external-path name="almacenamiento" path="." />
+    <cache-path name="cache" path="." />
+</paths>

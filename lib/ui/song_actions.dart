@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../library.dart';
 import '../main.dart';
+import '../native.dart';
 import '../theme.dart';
 import 'home.dart';
 import 'widgets.dart';
@@ -69,6 +70,7 @@ void showSongActions(BuildContext context, Song s) {
               );
             }),
           ),
+          _Action(Icons.share_outlined, 'Compartir', () => go(() => shareSong(s))),
           const SizedBox(height: 8),
         ],
       ),

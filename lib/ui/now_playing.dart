@@ -3,6 +3,7 @@ import 'package:just_audio/just_audio.dart';
 
 import '../library.dart';
 import '../main.dart';
+import '../native.dart';
 import '../player.dart';
 import '../theme.dart';
 import 'decor.dart';
@@ -58,6 +59,11 @@ class _NowPlayingState extends State<NowPlaying> {
                 ),
                 centerTitle: true,
                 actions: [
+                  IconButton(
+                    tooltip: 'Compartir',
+                    onPressed: () => shareSong(s),
+                    icon: const Icon(Icons.share_outlined),
+                  ),
                   IconButton(
                     tooltip: 'Ecualizador',
                     onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const EqualizerPage())),
