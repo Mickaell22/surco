@@ -99,19 +99,41 @@ Future<Uint8List?> fetchCover(Video v) async {
 }
 
 /// Letra de lrclib.net (sincronizada si la hay), la misma fuente que la música
-/// bajada en la PC.
+/// bajada en la PC. lrclib es abierta y tiene entradas basura ("probe"): se
+/// descartan las cortas y se prefiere la de duración parecida con más texto.
 Future<String?> fetchLyrics(String title, String artist, Duration duration) async {
   final q = {'track_name': title, 'artist_name': artist, 'duration': '${duration.inSeconds}'};
   final exact = await _get(Uri.https('lrclib.net', '/api/get', q));
-  Map<String, dynamic>? hit = exact == null ? null : jsonDecode(utf8.decode(exact)) as Map<String, dynamic>;
-  if (hit == null) {
-    final found = await _get(Uri.https('lrclib.net', '/api/search', {'q': '$artist $title'}));
-    final list = found == null ? const [] : jsonDecode(utf8.decode(found)) as List;
-    hit = list.isEmpty ? null : list.first as Map<String, dynamic>;
+  if (exact != null) {
+    final l = bestLyrics([jsonDecode(utf8.decode(exact))], duration);
+    if (l != null) return l;
   }
-  final lyrics = (hit?['syncedLyrics'] ?? hit?['plainLyrics']) as String?;
-  return lyrics?.trim().isEmpty ?? true ? null : lyrics;
+  final found = await _get(Uri.https('lrclib.net', '/api/search', {'track_name': title, 'artist_name': artist}));
+  return found == null ? null : bestLyrics(jsonDecode(utf8.decode(found)) as List, duration);
 }
+
+/// Elige entre resultados de lrclib: duración a ±5 s, con texto de verdad
+/// (sin marcas de tiempo, al menos 80 caracteres); sincronizada antes que plana.
+String? bestLyrics(List<dynamic> results, Duration duration) {
+  int textLength(String l) => l.replaceAll(RegExp(r'\[\d+:\d+(\.\d+)?\]'), '').trim().length;
+  String? best;
+  var bestScore = 0;
+  for (final r in results.cast<Map<String, dynamic>>()) {
+    final d = (r['duration'] as num?)?.toDouble();
+    if (d != null && duration > Duration.zero && (d - duration.inSeconds).abs() > 5) continue;
+    for (final (key, bonus) in [('syncedLyrics', 1 << 20), ('plainLyrics', 0)]) {
+      final l = (r[key] as String?)?.trim();
+      if (l == null || textLength(l) < 80) continue;
+      final score = bonus + textLength(l);
+      if (score > bestScore) (best, bestScore) = (l, score);
+    }
+  }
+  return best;
+}
+
+/// Año de publicación del disco, solo si YouTube Music lo dice en la
+/// descripción ("Released on: 1987-07-27"). El año de subida del video no sirve.
+String? releaseYear(String description) => RegExp(r'Released on:\s*(\d{4})').firstMatch(description)?.group(1);
 
 /// Recorta, etiqueta y guarda en Music/Surco. Devuelve la ruta final.
 Future<String> saveDownload({

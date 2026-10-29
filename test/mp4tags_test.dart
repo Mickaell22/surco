@@ -7,10 +7,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:surco/mp4tags.dart';
 
 Uint8List box(String type, List<int> body) => Uint8List.fromList([
-      ...(ByteData(4)..setUint32(0, body.length + 8)).buffer.asUint8List(),
-      ...latin1.encode(type),
-      ...body,
-    ]);
+  ...(ByteData(4)..setUint32(0, body.length + 8)).buffer.asUint8List(),
+  ...latin1.encode(type),
+  ...body,
+]);
 
 List<int> u32(int v) => (ByteData(4)..setUint32(0, v)).buffer.asUint8List();
 
@@ -21,7 +21,8 @@ void main() {
     final mdat = box('mdat', [...latin1.encode('AAAA'), ...latin1.encode('BBBB')]);
     final a = ftyp.length + 8, b = a + 4; // offsets absolutos de cada muestra
     final stco = box('stco', [0, 0, 0, 0, ...u32(2), ...u32(a), ...u32(b)]);
-    final moov = box('moov', box('trak', box('mdia', box('minf', box('stbl', stco)))));
+    final androidMeta = box('meta', [...box('keys', []), ...box('ilst', [])]); // lo que agrega MediaMuxer
+    final moov = box('moov', [...androidMeta, ...box('trak', box('mdia', box('minf', box('stbl', stco))))]);
     final file = Uint8List.fromList([...ftyp, ...mdat, ...moov]);
 
     final out = writeMp4Tags(
@@ -35,6 +36,7 @@ void main() {
     expect(ascii.decode(out.sublist(d.getUint32(i), d.getUint32(i) + 4)), 'AAAA');
     expect(ascii.decode(out.sublist(d.getUint32(i + 4), d.getUint32(i + 4) + 4)), 'BBBB');
     expect(latin1.decode(out.sublist(4, 8)), 'ftyp');
+    expect(latin1.decode(out, allowInvalid: true).contains('keys'), isFalse);
 
     // La biblioteca (audio_metadata_reader) lee lo escrito.
     final f = File('${Directory.systemTemp.createTempSync().path}/t.m4a')..writeAsBytesSync(out);

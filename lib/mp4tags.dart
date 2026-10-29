@@ -76,9 +76,15 @@ Uint8List writeMp4Tags(Uint8List file, Mp4Tags t) {
   if (top.any((b) => b.type == 'moof')) throw const FormatException('MP4 fragmentado');
   final moov = top.firstWhere((b) => b.type == 'moov', orElse: () => throw const FormatException('Sin moov'));
 
-  // Nuevo moov: los mismos hijos menos el udta viejo, más el nuevo.
+  // Nuevo moov: los mismos hijos menos el udta viejo, más el nuevo. También
+  // sale el moov/meta que agrega MediaMuxer (com.android.version): con él
+  // mutagen y otros lectores no encuentran las etiquetas.
   final udta = _udta(t);
-  final kids = _boxes(d, moov.start + moov.header, moov.end).where((b) => b.type != 'udta').toList();
+  final kids = _boxes(
+    d,
+    moov.start + moov.header,
+    moov.end,
+  ).where((b) => b.type != 'udta' && b.type != 'meta').toList();
   final moovBody = BytesBuilder(copy: false);
   for (final k in kids) {
     moovBody.add(Uint8List.sublistView(file, k.start, k.end));

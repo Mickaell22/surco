@@ -47,12 +47,6 @@ class _DownloadPageState extends State<DownloadPage> {
     if (widget.initialUrl case final url?) {
       _url.text = url;
       _load();
-    } else {
-      // Si en el portapapeles hay un link de YouTube, ya queda puesto.
-      Clipboard.getData(Clipboard.kTextPlain).then((d) {
-        final url = d?.text == null ? null : findYoutubeUrl(d!.text!);
-        if (url != null && mounted && _url.text.isEmpty) setState(() => _url.text = url);
-      });
     }
   }
 
@@ -145,7 +139,7 @@ class _DownloadPageState extends State<DownloadPage> {
           title: _title.text.trim(),
           artist: _artist.text.trim(),
           album: _album.text.trim(),
-          year: _info!.video.uploadDate?.year.toString(),
+          year: releaseYear(_info!.video.description),
           lyrics: _useLyrics ? _lyrics : null,
           coverJpeg: _useCover ? _cover : null,
         ),
@@ -195,7 +189,22 @@ class _DownloadPageState extends State<DownloadPage> {
     const SizedBox(height: 16),
     TextField(
       controller: _url,
-      decoration: const InputDecoration(labelText: 'Link de YouTube', prefixIcon: Icon(Icons.link_rounded)),
+      decoration: InputDecoration(
+        labelText: 'Link de YouTube',
+        prefixIcon: const Icon(Icons.link_rounded),
+        // Botón y no lectura automática: Android avisa cada vez que una app
+        // lee el portapapeles.
+        suffixIcon: IconButton(
+          tooltip: 'Pegar',
+          icon: const Icon(Icons.content_paste_rounded),
+          onPressed: () async {
+            final text = (await Clipboard.getData(Clipboard.kTextPlain))?.text;
+            if (text == null) return;
+            _url.text = findYoutubeUrl(text) ?? text.trim();
+            _load();
+          },
+        ),
+      ),
       keyboardType: TextInputType.url,
       onSubmitted: (_) => _load(),
     ),
@@ -316,7 +325,7 @@ class _DownloadPageState extends State<DownloadPage> {
             child: OutlinedButton.icon(
               onPressed: () => _listen(end: false),
               icon: const Icon(Icons.play_arrow_rounded),
-              label: const Text('Escuchar inicio'),
+              label: const Text('Inicio'),
             ),
           ),
           const SizedBox(width: 12),
@@ -324,7 +333,7 @@ class _DownloadPageState extends State<DownloadPage> {
             child: OutlinedButton.icon(
               onPressed: () => _listen(end: true),
               icon: const Icon(Icons.play_arrow_rounded),
-              label: const Text('Escuchar final'),
+              label: const Text('Final'),
             ),
           ),
         ],

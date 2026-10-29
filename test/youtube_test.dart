@@ -11,6 +11,27 @@ void main() {
     expect((t.artist, t.title), ('ImagineDragons', 'Believer'));
   });
 
+  test('letras de lrclib: descarta basura y prefiere sincronizada con duración parecida', () {
+    final larga = List.filled(10, 'una línea de la canción').join('\n');
+    final sync = List.filled(10, '[00:01.00] una línea de la canción').join('\n');
+    expect(
+      bestLyrics([
+        {'duration': 213, 'syncedLyrics': '[00:00.00]probe'},
+      ], const Duration(seconds: 213)),
+      isNull,
+    );
+    expect(
+      bestLyrics([
+        {'duration': 213, 'plainLyrics': larga},
+        {'duration': 214, 'syncedLyrics': sync},
+        {'duration': 300, 'syncedLyrics': sync},
+      ], const Duration(seconds: 213)),
+      sync,
+    );
+    expect(releaseYear('Provided to YouTube\n\nReleased on: 1987-07-27'), '1987');
+    expect(releaseYear('Video oficial'), isNull);
+  });
+
   test('encuentra el link dentro de un texto compartido', () {
     expect(findYoutubeUrl('Mira esto https://youtu.be/dQw4w9WgXcQ?si=abc'), 'https://youtu.be/dQw4w9WgXcQ?si=abc');
     expect(findYoutubeUrl('https://www.youtube.com/watch?v=dQw4w9WgXcQ'), isNotNull);
