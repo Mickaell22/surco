@@ -6,6 +6,7 @@ import '../main.dart';
 import '../player.dart';
 import '../theme.dart';
 import 'decor.dart';
+import 'equalizer_page.dart';
 import 'widgets.dart';
 
 class NowPlaying extends StatefulWidget {
@@ -57,6 +58,11 @@ class _NowPlayingState extends State<NowPlaying> {
                 ),
                 centerTitle: true,
                 actions: [
+                  IconButton(
+                    tooltip: 'Ecualizador',
+                    onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const EqualizerPage())),
+                    icon: Icon(Icons.graphic_eq_rounded, color: settings.eqEnabled ? l.accent : l.ink),
+                  ),
                   IconButton(
                     tooltip: 'Temporizador',
                     onPressed: () => _sleepSheet(context),
@@ -208,10 +214,7 @@ class _Controls extends StatelessWidget {
     // streams el modo cambiaba pero el botón no se volvía a pintar.
     return StreamBuilder<bool>(
       stream: player.audio.shuffleModeEnabledStream,
-      builder: (_, _) => StreamBuilder<LoopMode>(
-        stream: player.audio.loopModeStream,
-        builder: (_, _) => _build(l),
-      ),
+      builder: (_, _) => StreamBuilder<LoopMode>(stream: player.audio.loopModeStream, builder: (_, _) => _build(l)),
     );
   }
 

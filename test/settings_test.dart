@@ -106,4 +106,13 @@ void main() {
     s.seasonDraw = false;
     expect(s.autoPaletteFor(hoy), s.launchPalette);
   });
+
+  test('preajustes del ecualizador: graves sube los bajos, normal queda plano', () {
+    expect(EqPreset.graves.gainAt(60), greaterThan(0));
+    expect(EqPreset.graves.gainAt(14000), 0);
+    expect(EqPreset.agudos.gainAt(14000), greaterThan(EqPreset.agudos.gainAt(60)));
+    for (final hz in [60.0, 1000.0, 14000.0]) {
+      expect(EqPreset.normal.gainAt(hz), 0);
+    }
+  });
 }

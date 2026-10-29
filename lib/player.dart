@@ -31,11 +31,28 @@ class Player extends ChangeNotifier {
     });
     settings.addListener(() => audio.setSkipSilenceEnabled(settings.skipSilence));
     _initSession();
+    // Los parámetros existen recién cuando Android crea el reproductor.
+    equalizer.parameters.then((_) => applyEq());
+  }
+
+  /// Aplica la configuración del ecualizador y del volumen extra guardada.
+  Future<void> applyEq() async {
+    await equalizer.setEnabled(settings.eqEnabled);
+    final params = await equalizer.parameters;
+    for (final band in params.bands) {
+      final g = band.index < settings.eqGains.length ? settings.eqGains[band.index] : 0.0;
+      await band.setGain(g.clamp(params.minDecibels, params.maxDecibels));
+    }
+    await loudness.setEnabled(settings.eqEnabled && settings.loudness > 0);
+    await loudness.setTargetGain(settings.loudness);
   }
 
   final Stats stats;
   final Settings settings;
-  final audio = AudioPlayer();
+  // Efectos nativos de Android, sin paquetes extra.
+  final equalizer = AndroidEqualizer();
+  final loudness = AndroidLoudnessEnhancer();
+  late final audio = AudioPlayer(audioPipeline: AudioPipeline(androidAudioEffects: [equalizer, loudness]));
   List<Song> queue = [];
   Timer? _sleep;
   DateTime? sleepAt;
@@ -70,13 +87,15 @@ class Player extends ChangeNotifier {
 
   Future<void> _saveSession() async {
     if (queue.isEmpty) return;
-    (await _sessionFile).writeAsString(jsonEncode({
-      'q': [for (final s in queue) s.path],
-      'i': audio.currentIndex ?? 0,
-      'pos': audio.position.inMilliseconds,
-      'shuffle': audio.shuffleModeEnabled,
-      'loop': audio.loopMode.name,
-    }));
+    (await _sessionFile).writeAsString(
+      jsonEncode({
+        'q': [for (final s in queue) s.path],
+        'i': audio.currentIndex ?? 0,
+        'pos': audio.position.inMilliseconds,
+        'shuffle': audio.shuffleModeEnabled,
+        'loop': audio.loopMode.name,
+      }),
+    );
   }
 
   Future<void> restoreSession(Map<String, Song> byPath) async {
@@ -97,7 +116,9 @@ class Player extends ChangeNotifier {
       await audio.setLoopMode(LoopMode.values.asNameMap()[j['loop']] ?? LoopMode.off);
       if (j['shuffle'] == true) await audio.setShuffleModeEnabled(true);
       notifyListeners();
-    } catch (_) {/* sin sesion previa o archivos movidos */}
+    } catch (_) {
+      /* sin sesion previa o archivos movidos */
+    }
   }
 
   Song? get current {
@@ -108,37 +129,37 @@ class Player extends ChangeNotifier {
   Future<void> playList(List<Song> songs, int index, {bool shuffle = false}) async {
     queue = List.of(songs);
     await audio.setShuffleModeEnabled(shuffle);
-    await audio.setAudioSources(
-      [for (final s in queue) AudioSource.file(s.path, tag: _media(s))],
-      initialIndex: shuffle ? null : index,
-    );
+    await audio.setAudioSources([
+      for (final s in queue) AudioSource.file(s.path, tag: _media(s)),
+    ], initialIndex: shuffle ? null : index);
     if (shuffle) await audio.shuffle();
     notifyListeners();
     audio.play();
   }
 
   MediaItem _media(Song s) => MediaItem(
-        id: s.path,
-        title: s.title,
-        artist: s.artist,
-        album: s.album,
-        duration: s.durationMs > 0 ? s.duration : null,
-        artUri: s.cover == null ? null : Uri.file(s.cover!),
-      );
+    id: s.path,
+    title: s.title,
+    artist: s.artist,
+    album: s.album,
+    duration: s.durationMs > 0 ? s.duration : null,
+    artUri: s.cover == null ? null : Uri.file(s.cover!),
+  );
 
   void toggle() => audio.playing ? audio.pause() : audio.play();
 
   Future<void> next() => audio.hasNext ? audio.seekToNext() : audio.seek(Duration.zero, index: 0);
 
   /// Como en cualquier reproductor: si ya van 3 s, "anterior" reinicia la cancion.
-  Future<void> previous() =>
-      audio.position > const Duration(seconds: 3) || !audio.hasPrevious ? audio.seek(Duration.zero) : audio.seekToPrevious();
+  Future<void> previous() => audio.position > const Duration(seconds: 3) || !audio.hasPrevious
+      ? audio.seek(Duration.zero)
+      : audio.seekToPrevious();
 
   Future<void> cycleLoop() => audio.setLoopMode(switch (audio.loopMode) {
-        LoopMode.off => LoopMode.all,
-        LoopMode.all => LoopMode.one,
-        LoopMode.one => LoopMode.off,
-      });
+    LoopMode.off => LoopMode.all,
+    LoopMode.all => LoopMode.one,
+    LoopMode.one => LoopMode.off,
+  });
 
   Future<void> toggleShuffle() async {
     final on = !audio.shuffleModeEnabled;

@@ -115,6 +115,30 @@ Palette launchPaletteAfter(Palette? last, [Random? rnd]) {
 
 String _dayKey(DateTime d) => '${d.year}-${d.month}-${d.day}';
 
+/// Preajustes del ecualizador, definidos como curva de ganancia (dB) según la
+/// frecuencia: así sirven para cualquier cantidad de bandas que traiga el teléfono.
+enum EqPreset {
+  normal('Normal'),
+  graves('Graves'),
+  voz('Voz'),
+  agudos('Agudos'),
+  rock('Rock'),
+  pop('Pop'),
+  personal('Personalizado');
+
+  const EqPreset(this.label);
+  final String label;
+
+  double gainAt(double hz) => switch (this) {
+    normal || personal => 0,
+    graves => hz < 200 ? 6 : (hz < 600 ? 3 : 0),
+    voz => hz < 250 ? -2 : (hz < 800 ? 1 : (hz < 5000 ? 4 : 1)),
+    agudos => hz < 2000 ? 0 : (hz < 6000 ? 3 : 5),
+    rock => hz < 250 ? 4 : (hz < 2000 ? -1 : 4),
+    pop => hz < 250 ? -1 : (hz < 4000 ? 3 : 0),
+  };
+}
+
 enum LibraryScope {
   music('Solo Music y Download', 'Más rápido'),
   all('Todo el teléfono', 'Encuentra audio en cualquier carpeta');
@@ -143,12 +167,21 @@ class Settings extends ChangeNotifier {
   ThemeRotation rotation = ThemeRotation.fixed;
   bool seasonalThemes = true;
   bool decorations = true;
+
   /// Cumpleaños del usuario (mes y día); null si no lo configuró.
   int? birthdayMonth, birthdayDay;
   bool pauseOnUnplug = true;
   bool resumeSession = true;
   bool skipSilence = false;
   bool ignoreShort = true;
+
+  /// Ecualizador: ganancia en dB por banda (índice de banda del teléfono).
+  bool eqEnabled = false;
+  EqPreset eqPreset = EqPreset.normal;
+  List<double> eqGains = [];
+
+  /// Volumen extra (LoudnessEnhancer de Android), en dB.
+  double loudness = 0;
   LibraryScope scope = LibraryScope.music;
   SongSort sort = SongSort.title;
 
@@ -212,9 +245,9 @@ class Settings extends ChangeNotifier {
   }
 
   void clearOverride() => update((x) {
-        x.overridePalette = null;
-        x.overrideDay = null;
-      });
+    x.overridePalette = null;
+    x.overrideDay = null;
+  });
 
   Future<void> load() async {
     _file = File('${(await getApplicationSupportDirectory()).path}/settings.json');
@@ -229,7 +262,8 @@ class Settings extends ChangeNotifier {
         scope = LibraryScope.values.asNameMap()[j['scope']] ?? scope;
         sort = SongSort.values.asNameMap()[j['sort']] ?? sort;
         // Migración: la 1.1 guardaba un bool dailyTheme.
-        rotation = ThemeRotation.values.asNameMap()[j['rotation']] ??
+        rotation =
+            ThemeRotation.values.asNameMap()[j['rotation']] ??
             (j['dailyTheme'] == true ? ThemeRotation.daily : ThemeRotation.fixed);
         pureBlack = j['pureBlack'] ?? pureBlack;
         seasonalThemes = j['seasonalThemes'] ?? seasonalThemes;
@@ -244,7 +278,13 @@ class Settings extends ChangeNotifier {
         resumeSession = j['resumeSession'] ?? resumeSession;
         skipSilence = j['skipSilence'] ?? skipSilence;
         ignoreShort = j['ignoreShort'] ?? ignoreShort;
-      } catch (_) {/* archivo corrupto: quedan los valores por defecto */}
+        eqEnabled = j['eqEnabled'] ?? eqEnabled;
+        eqPreset = EqPreset.values.asNameMap()[j['eqPreset']] ?? eqPreset;
+        eqGains = [for (final g in (j['eqGains'] as List?) ?? const []) (g as num).toDouble()];
+        loudness = (j['loudness'] as num?)?.toDouble() ?? loudness;
+      } catch (_) {
+        /* archivo corrupto: quedan los valores por defecto */
+      }
     }
     launchPalette = launchPaletteAfter(lastLaunch);
     seasonDraw = Random().nextBool();
@@ -274,24 +314,30 @@ class Settings extends ChangeNotifier {
     _save();
   }
 
-  void _save() => _file?.writeAsString(jsonEncode({
-        'palette': palette.name,
-        'mode': mode.name,
-        'scope': scope.name,
-        'sort': sort.name,
-        'rotation': rotation.name,
-        'pureBlack': pureBlack,
-        'seasonalThemes': seasonalThemes,
-        'decorations': decorations,
-        'birthdayMonth': birthdayMonth,
-        'birthdayDay': birthdayDay,
-        'overridePalette': overridePalette?.name,
-        'overrideDay': overrideDay,
-        'lastLaunch': launchPalette.name,
-        'lastOpenDay': _dayKey(DateTime.now()),
-        'pauseOnUnplug': pauseOnUnplug,
-        'resumeSession': resumeSession,
-        'skipSilence': skipSilence,
-        'ignoreShort': ignoreShort,
-      }));
+  void _save() => _file?.writeAsString(
+    jsonEncode({
+      'palette': palette.name,
+      'mode': mode.name,
+      'scope': scope.name,
+      'sort': sort.name,
+      'rotation': rotation.name,
+      'pureBlack': pureBlack,
+      'seasonalThemes': seasonalThemes,
+      'decorations': decorations,
+      'birthdayMonth': birthdayMonth,
+      'birthdayDay': birthdayDay,
+      'overridePalette': overridePalette?.name,
+      'overrideDay': overrideDay,
+      'lastLaunch': launchPalette.name,
+      'lastOpenDay': _dayKey(DateTime.now()),
+      'pauseOnUnplug': pauseOnUnplug,
+      'resumeSession': resumeSession,
+      'skipSilence': skipSilence,
+      'ignoreShort': ignoreShort,
+      'eqEnabled': eqEnabled,
+      'eqPreset': eqPreset.name,
+      'eqGains': eqGains,
+      'loudness': loudness,
+    }),
+  );
 }
