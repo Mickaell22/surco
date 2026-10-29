@@ -29,12 +29,29 @@ class MainActivity : AudioServiceActivity() {
     private var pendingPick: MethodChannel.Result? = null
     private val main = Handler(Looper.getMainLooper())
 
+    /** Texto compartido con el que se abrió la app (un link de YouTube). */
+    private var sharedText: String? = null
+
+    private fun sharedFrom(intent: Intent?): String? =
+        if (intent?.action == Intent.ACTION_SEND) intent.getStringExtra(Intent.EXTRA_TEXT) else null
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        // App ya abierta: el link llega en vivo.
+        sharedFrom(intent)?.let { channel.invokeMethod("shared", it) }
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         // Un solo canal para lo poco que Flutter no trae: compartir y copiar archivos.
         channel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "surco/native")
+        sharedText = sharedFrom(intent)
         channel.setMethodCallHandler { call, result ->
             when (call.method) {
+                "sharedText" -> {
+                    result.success(sharedText)
+                    sharedText = null
+                }
                 "share" -> {
                     val file = File(call.argument<String>("path")!!)
                     val uri = FileProvider.getUriForFile(this, "$packageName.archivos", file)

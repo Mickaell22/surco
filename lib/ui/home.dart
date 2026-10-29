@@ -4,9 +4,11 @@ import 'package:permission_handler/permission_handler.dart';
 
 import '../library.dart';
 import '../main.dart';
+import '../native.dart';
 import '../settings.dart';
 import '../smart.dart';
 import '../theme.dart';
+import '../youtube.dart';
 import 'brand.dart';
 import 'decor.dart';
 import 'download_page.dart';
@@ -32,6 +34,12 @@ class _HomeState extends State<Home> {
   void initState() {
     super.initState();
     _askPermission();
+    listenNative(onShared: (text) {
+      if (!mounted) return;
+      final url = findYoutubeUrl(text);
+      if (url == null) return;
+      Navigator.push(context, MaterialPageRoute(builder: (_) => DownloadPage(initialUrl: url)));
+    });
     if (settings.updateCheckDue) {
       WidgetsBinding.instance.addPostFrameCallback((_) => checkForUpdate(context, quiet: true));
     }

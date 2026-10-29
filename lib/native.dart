@@ -28,15 +28,30 @@ typedef BackupResult = ({int copied, int skipped, int failed});
 /// Copia [files] a una carpeta "Surco" dentro de [tree]. [onProgress] recibe
 /// (hechas, total) a medida que avanza; corre en un hilo nativo.
 Future<BackupResult> backup(String tree, List<String> files, void Function(int done, int total) onProgress) async {
-  _channel.setMethodCallHandler((call) async {
-    if (call.method == 'backupProgress') onProgress(call.arguments['done'] as int, call.arguments['total'] as int);
-  });
+  _onBackupProgress = onProgress;
   try {
     final r = (await _channel.invokeMapMethod<String, int>('backup', {'tree': tree, 'files': files}))!;
     return (copied: r['copied']!, skipped: r['skipped']!, failed: r['failed']!);
   } finally {
-    _channel.setMethodCallHandler(null);
+    _onBackupProgress = null;
   }
+}
+
+void Function(int done, int total)? _onBackupProgress;
+
+/// Recibe lo que manda Kotlin por su cuenta: progreso del backup y links
+/// compartidos con la app ya abierta. [onShared] recibe el texto compartido.
+Future<void> listenNative({required void Function(String text) onShared}) async {
+  _channel.setMethodCallHandler((call) async {
+    switch (call.method) {
+      case 'backupProgress':
+        _onBackupProgress?.call(call.arguments['done'] as int, call.arguments['total'] as int);
+      case 'shared':
+        onShared(call.arguments as String);
+    }
+  });
+  // Texto con el que se abrió la app desde "Compartir", si lo hubo.
+  if (await _channel.invokeMethod<String>('sharedText') case final text?) onShared(text);
 }
 
 /// Arquitectura principal del teléfono (arm64-v8a, armeabi-v7a, x86_64).
