@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 
 import 'library.dart';
+import 'native.dart';
 import 'player.dart';
 import 'settings.dart';
 import 'stats.dart';
@@ -62,7 +63,9 @@ class _SurcoAppState extends State<SurcoApp> with WidgetsBindingObserver {
     if (state == AppLifecycleState.paused) _wasInBackground = true;
     if (state == AppLifecycleState.resumed && _wasInBackground) {
       _wasInBackground = false;
-      settings.newOpen();
+      // Volver de compartir o del selector de carpetas no es abrir la app.
+      if (!openedSystemScreen) settings.newOpen();
+      openedSystemScreen = false;
     }
   }
 

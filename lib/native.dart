@@ -5,6 +5,15 @@ import 'library.dart';
 /// Lo poco que Flutter no trae, hecho en Kotlin (MainActivity) sin paquetes.
 const _channel = MethodChannel('surco/native');
 
+/// Surco abrió una pantalla de Android (compartir, selector de carpetas,
+/// instalador): volver de ahí no es "abrir la app" y no debe cambiar el tema.
+bool openedSystemScreen = false;
+
+Future<T?> _system<T>(String method, [Object? args]) {
+  openedSystemScreen = true;
+  return _channel.invokeMethod<T>(method, args);
+}
+
 String _mime(String path) => switch (path.split('.').last.toLowerCase()) {
   'm4a' || 'mp4' || 'aac' => 'audio/mp4',
   'mp3' => 'audio/mpeg',
@@ -16,11 +25,11 @@ String _mime(String path) => switch (path.split('.').last.toLowerCase()) {
 
 /// Abre el menú de compartir de Android con el archivo de la canción.
 Future<void> shareSong(Song s) =>
-    _channel.invokeMethod('share', {'path': s.path, 'mime': _mime(s.path), 'title': '${s.title} · ${s.artist}'});
+    _system('share', {'path': s.path, 'mime': _mime(s.path), 'title': '${s.title} · ${s.artist}'});
 
 /// Abre el selector de carpetas de Android (SD, USB, Drive...). Devuelve la
 /// carpeta elegida o null si se canceló.
-Future<String?> pickFolder() => _channel.invokeMethod<String>('pickFolder');
+Future<String?> pickFolder() => _system<String>('pickFolder');
 
 /// Resultado de un backup: copiadas, ya estaban (mismo tamaño) y fallidas.
 typedef BackupResult = ({int copied, int skipped, int failed});
@@ -58,7 +67,7 @@ Future<void> listenNative({required void Function(String text) onShared}) async 
 Future<String> primaryAbi() async => (await _channel.invokeMethod<String>('abi')) ?? 'arm64-v8a';
 
 /// Abre el instalador de Android con un APK ya descargado.
-Future<void> installApk(String path) => _channel.invokeMethod('installApk', {'path': path});
+Future<void> installApk(String path) => _system('installApk', {'path': path});
 
 /// Copia el audio de [input] a [output] entre [start] y [end] (null = hasta el
 /// final), sin recomprimir. Siempre deja un MP4 normal, no fragmentado.
