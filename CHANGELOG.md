@@ -2,6 +2,22 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); las versiones siguen [SemVer](https://semver.org/lang/es/).
 
+## [1.3.0] - 2026-10-29
+
+### Agregado
+- Descargar de YouTube: pegando el link o con Compartir desde la app de YouTube. Elección de calidad, recorte con vista previa (sin recomprimir), título y artista limpios, portada cuadrada y letra de lrclib dentro del archivo. Se guarda en `Music/Surco`.
+- Ecualizador con preajustes, ajuste por banda y volumen extra.
+- Compartir la pista desde el reproductor y desde el menú de cada canción.
+- Copia de seguridad de canciones y listas a una carpeta elegida; repetirla solo copia lo nuevo.
+- Aviso de versiones nuevas con descarga e instalación desde la app.
+- Halloween mucho más decorado: niebla, fantasmas, más telarañas, arañas y murciélagos, y calabazas con vela junto a la luna en la barra.
+
+### Cambiado
+- Surco ahora pide acceso a internet (solo para YouTube, letras y buscar actualizaciones) y permiso para instalar actualizaciones.
+
+### Corregido
+- Volver de compartir o del selector de carpetas ya no cambia la paleta en "Al abrir".
+
 ## [1.2.1] - 2026-10-19
 
 ### Cambiado
