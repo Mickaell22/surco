@@ -6,6 +6,7 @@ import '../settings.dart';
 import '../theme.dart';
 import 'brand.dart';
 import 'equalizer_page.dart';
+import 'update_dialog.dart';
 
 const appVersion = '1.2.1';
 const repoUrl = 'github.com/Mickaell22/surco';
@@ -244,6 +245,17 @@ class SettingsPage extends StatelessWidget {
               },
             ),
             const _Section('Acerca de'),
+            _Toggle(
+              'Avisar de versiones nuevas',
+              'Una vez al día revisa GitHub al abrir la app',
+              settings.checkUpdates,
+              (v) => settings.update((x) => x.checkUpdates = v),
+            ),
+            ListTile(
+              leading: Icon(Icons.system_update_rounded, color: l.inkSoft),
+              title: Text('Buscar actualizaciones', style: TextStyle(color: l.ink)),
+              onTap: () => checkForUpdate(context),
+            ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
               child: Row(

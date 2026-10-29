@@ -38,3 +38,9 @@ Future<BackupResult> backup(String tree, List<String> files, void Function(int d
     _channel.setMethodCallHandler(null);
   }
 }
+
+/// Arquitectura principal del teléfono (arm64-v8a, armeabi-v7a, x86_64).
+Future<String> primaryAbi() async => (await _channel.invokeMethod<String>('abi')) ?? 'arm64-v8a';
+
+/// Abre el instalador de Android con un APK ya descargado.
+Future<void> installApk(String path) => _channel.invokeMethod('installApk', {'path': path});

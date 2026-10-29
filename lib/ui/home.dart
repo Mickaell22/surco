@@ -13,6 +13,7 @@ import 'now_playing.dart';
 import 'settings_page.dart';
 import 'song_actions.dart';
 import 'stats_page.dart';
+import 'update_dialog.dart';
 import 'widgets.dart';
 
 class Home extends StatefulWidget {
@@ -30,6 +31,9 @@ class _HomeState extends State<Home> {
   void initState() {
     super.initState();
     _askPermission();
+    if (settings.updateCheckDue) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => checkForUpdate(context, quiet: true));
+    }
   }
 
   Future<void> _askPermission() async {

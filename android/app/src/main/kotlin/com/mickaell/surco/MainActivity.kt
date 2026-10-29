@@ -2,6 +2,7 @@ package com.mickaell.surco
 
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Environment
 import android.os.Handler
 import android.os.Looper
@@ -36,6 +37,16 @@ class MainActivity : AudioServiceActivity() {
                         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                     }
                     startActivity(Intent.createChooser(send, call.argument<String>("title")))
+                    result.success(null)
+                }
+                "abi" -> result.success(Build.SUPPORTED_ABIS.firstOrNull())
+                "installApk" -> {
+                    val file = File(call.argument<String>("path")!!)
+                    val uri = FileProvider.getUriForFile(this, "$packageName.archivos", file)
+                    startActivity(Intent(Intent.ACTION_VIEW).apply {
+                        setDataAndType(uri, "application/vnd.android.package-archive")
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+                    })
                     result.success(null)
                 }
                 "pickFolder" -> {

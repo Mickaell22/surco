@@ -180,6 +180,14 @@ class Settings extends ChangeNotifier {
   EqPreset eqPreset = EqPreset.normal;
   List<double> eqGains = [];
 
+  /// Avisar al abrir (una vez al día) si hay una versión nueva en GitHub.
+  bool checkUpdates = true;
+  String? lastUpdateCheck;
+
+  /// Hoy todavía no se buscó actualización (y el aviso está activo).
+  bool get updateCheckDue => checkUpdates && lastUpdateCheck != _dayKey(DateTime.now());
+  void markUpdateChecked() => update((s) => s.lastUpdateCheck = _dayKey(DateTime.now()));
+
   /// Volumen extra (LoudnessEnhancer de Android), en dB.
   double loudness = 0;
   LibraryScope scope = LibraryScope.music;
@@ -282,6 +290,8 @@ class Settings extends ChangeNotifier {
         eqPreset = EqPreset.values.asNameMap()[j['eqPreset']] ?? eqPreset;
         eqGains = [for (final g in (j['eqGains'] as List?) ?? const []) (g as num).toDouble()];
         loudness = (j['loudness'] as num?)?.toDouble() ?? loudness;
+        checkUpdates = j['checkUpdates'] ?? checkUpdates;
+        lastUpdateCheck = j['lastUpdateCheck'];
       } catch (_) {
         /* archivo corrupto: quedan los valores por defecto */
       }
@@ -338,6 +348,8 @@ class Settings extends ChangeNotifier {
       'eqPreset': eqPreset.name,
       'eqGains': eqGains,
       'loudness': loudness,
+      'checkUpdates': checkUpdates,
+      'lastUpdateCheck': lastUpdateCheck,
     }),
   );
 }
