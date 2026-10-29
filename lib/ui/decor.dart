@@ -168,8 +168,9 @@ class _DecorPainter extends CustomPainter {
   /// Calabazas con vela que titila y una luna, en el hueco de la barra superior
   /// entre el logo y la lupa.
   void _barScene(Canvas c, Size s, double y, double v) {
-    final x0 = 162.0, x1 = s.width - 112;
-    if (x1 - x0 < 90) return; // pantalla angosta: no hay hueco
+    // Hueco entre el logo (termina en ~145) y la lupa (empieza en ~ancho - 100).
+    final x0 = 156.0, x1 = s.width - 106;
+    if (x1 - x0 < 80) return; // pantalla angosta: no hay hueco
     final moon = Offset(x1 - 8, y - 2);
     c.drawCircle(moon, 20, Paint()..color = const Color(0xFFF3E3A8).withValues(alpha: .12));
     c.drawPath(
