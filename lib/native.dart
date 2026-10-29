@@ -44,3 +44,19 @@ Future<String> primaryAbi() async => (await _channel.invokeMethod<String>('abi')
 
 /// Abre el instalador de Android con un APK ya descargado.
 Future<void> installApk(String path) => _channel.invokeMethod('installApk', {'path': path});
+
+/// Copia el audio de [input] a [output] entre [start] y [end] (null = hasta el
+/// final), sin recomprimir. Siempre deja un MP4 normal, no fragmentado.
+Future<void> trimAudio(String input, String output, Duration start, Duration? end) => _channel.invokeMethod('trim', {
+  'input': input,
+  'output': output,
+  'startMs': start.inMilliseconds,
+  'endMs': end?.inMilliseconds,
+});
+
+/// Recorta una imagen al cuadrado del centro y la deja en JPEG de hasta [size] px.
+Future<Uint8List?> squareJpeg(Uint8List bytes, {int size = 720}) =>
+    _channel.invokeMethod<Uint8List>('squareJpeg', {'bytes': bytes, 'size': size});
+
+/// Avisa a Android de un archivo nuevo para que otras apps lo vean.
+Future<void> scanFile(String path) => _channel.invokeMethod('scanFile', {'path': path});

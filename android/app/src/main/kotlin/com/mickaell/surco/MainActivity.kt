@@ -1,6 +1,12 @@
 package com.mickaell.surco
 
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.media.MediaCodec
+import android.media.MediaExtractor
+import android.media.MediaMuxer
+import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
@@ -12,7 +18,9 @@ import androidx.core.content.FileProvider
 import com.ryanheise.audioservice.AudioServiceActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import java.io.ByteArrayOutputStream
 import java.io.File
+import java.nio.ByteBuffer
 
 // AudioServiceActivity: necesaria para que just_audio_background maneje la
 // notificacion y los botones de medios (audifonos Bluetooth).
@@ -47,6 +55,34 @@ class MainActivity : AudioServiceActivity() {
                         setDataAndType(uri, "application/vnd.android.package-archive")
                         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
                     })
+                    result.success(null)
+                }
+                "trim" -> Thread {
+                    try {
+                        trim(
+                            call.argument<String>("input")!!, call.argument<String>("output")!!,
+                            call.argument<Number>("startMs")!!.toLong(), call.argument<Number>("endMs")?.toLong()
+                        )
+                        main.post { result.success(null) }
+                    } catch (e: Exception) {
+                        main.post { result.error("trim", e.message, null) }
+                    }
+                }.start()
+                "squareJpeg" -> {
+                    val bytes = call.argument<ByteArray>("bytes")!!
+                    val src = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                    if (src == null) result.success(null) else {
+                        val side = minOf(src.width, src.height)
+                        val crop = Bitmap.createBitmap(src, (src.width - side) / 2, (src.height - side) / 2, side, side)
+                        val max = call.argument<Int>("size")!!
+                        val out = if (side > max) Bitmap.createScaledBitmap(crop, max, max, true) else crop
+                        val buf = ByteArrayOutputStream()
+                        out.compress(Bitmap.CompressFormat.JPEG, 90, buf)
+                        result.success(buf.toByteArray())
+                    }
+                }
+                "scanFile" -> {
+                    MediaScannerConnection.scanFile(this, arrayOf(call.argument<String>("path")!!), null, null)
                     result.success(null)
                 }
                 "pickFolder" -> {
@@ -126,6 +162,44 @@ class MainActivity : AudioServiceActivity() {
             main.post { result.success(summary) }
         } catch (e: Exception) {
             main.post { result.error("backup", e.message, null) }
+        }
+    }
+
+    /**
+     * Copia la pista de audio de [input] a un MP4 normal en [output], solo entre
+     * [startMs] y [endMs] (null = hasta el final). No recomprime: copia las
+     * muestras AAC tal cual, asi no pierde calidad. Tambien convierte el MP4
+     * fragmentado de YouTube en uno comun, donde se pueden escribir etiquetas.
+     */
+    private fun trim(input: String, output: String, startMs: Long, endMs: Long?) {
+        val ex = MediaExtractor()
+        ex.setDataSource(input)
+        val track = (0 until ex.trackCount).first {
+            ex.getTrackFormat(it).getString(android.media.MediaFormat.KEY_MIME)?.startsWith("audio/") == true
+        }
+        ex.selectTrack(track)
+        val muxer = MediaMuxer(output, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+        try {
+            val out = muxer.addTrack(ex.getTrackFormat(track))
+            muxer.start()
+            ex.seekTo(startMs * 1000, MediaExtractor.SEEK_TO_PREVIOUS_SYNC)
+            val buf = ByteBuffer.allocate(1 shl 20)
+            val info = MediaCodec.BufferInfo()
+            var first = -1L
+            while (true) {
+                val n = ex.readSampleData(buf, 0)
+                if (n < 0) break
+                val t = ex.sampleTime
+                if (endMs != null && t > endMs * 1000) break
+                if (first < 0) first = t
+                info.set(0, n, t - first, if (ex.sampleFlags and MediaExtractor.SAMPLE_FLAG_SYNC != 0) MediaCodec.BUFFER_FLAG_KEY_FRAME else 0)
+                muxer.writeSampleData(out, buf, info)
+                ex.advance()
+            }
+            muxer.stop()
+        } finally {
+            muxer.release()
+            ex.release()
         }
     }
 
