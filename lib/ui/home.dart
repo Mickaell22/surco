@@ -9,6 +9,7 @@ import '../smart.dart';
 import '../theme.dart';
 import 'brand.dart';
 import 'decor.dart';
+import 'download_page.dart';
 import 'now_playing.dart';
 import 'settings_page.dart';
 import 'song_actions.dart';
@@ -90,9 +91,14 @@ class _HomeState extends State<Home> {
                   onSelected: (v) => switch (v) {
                     'stats' => Navigator.push(context, MaterialPageRoute(builder: (_) => const StatsPage())),
                     'settings' => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsPage())),
+                    'youtube' => Navigator.push(context, MaterialPageRoute(builder: (_) => const DownloadPage())),
                     _ => library.scan(),
                   },
                   itemBuilder: (_) => const [
+                    PopupMenuItem(
+                      value: 'youtube',
+                      child: ListTile(leading: Icon(Icons.download_rounded), title: Text('Descargar de YouTube')),
+                    ),
                     PopupMenuItem(
                       value: 'stats',
                       child: ListTile(leading: Icon(Icons.insights_outlined), title: Text('Estadísticas')),

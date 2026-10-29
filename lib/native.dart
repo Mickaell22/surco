@@ -6,13 +6,13 @@ import 'library.dart';
 const _channel = MethodChannel('surco/native');
 
 String _mime(String path) => switch (path.split('.').last.toLowerCase()) {
-      'm4a' || 'mp4' || 'aac' => 'audio/mp4',
-      'mp3' => 'audio/mpeg',
-      'ogg' || 'opus' => 'audio/ogg',
-      'flac' => 'audio/flac',
-      'wav' => 'audio/wav',
-      _ => 'audio/*',
-    };
+  'm4a' || 'mp4' || 'aac' => 'audio/mp4',
+  'mp3' => 'audio/mpeg',
+  'ogg' || 'opus' => 'audio/ogg',
+  'flac' => 'audio/flac',
+  'wav' => 'audio/wav',
+  _ => 'audio/*',
+};
 
 /// Abre el menú de compartir de Android con el archivo de la canción.
 Future<void> shareSong(Song s) =>
@@ -60,3 +60,6 @@ Future<Uint8List?> squareJpeg(Uint8List bytes, {int size = 720}) =>
 
 /// Avisa a Android de un archivo nuevo para que otras apps lo vean.
 Future<void> scanFile(String path) => _channel.invokeMethod('scanFile', {'path': path});
+
+/// Carpeta pública Music del teléfono (donde se guardan las descargas).
+Future<String> musicDir() async => (await _channel.invokeMethod<String>('musicDir'))!;

@@ -96,8 +96,10 @@ Uint8List writeMp4Tags(Uint8List file, Mp4Tags t) {
     pos += identical(b, moov) ? newMoov.length : b.size;
   }
   int remap(int offset) {
-    final b = top.firstWhere((b) => offset >= b.start && offset < b.end,
-        orElse: () => throw const FormatException('Offset fuera del archivo'));
+    final b = top.firstWhere(
+      (b) => offset >= b.start && offset < b.end,
+      orElse: () => throw const FormatException('Offset fuera del archivo'),
+    );
     final s = newStart[b];
     if (s == null) throw const FormatException('Offset apunta a una caja descartada');
     return offset - b.start + s;

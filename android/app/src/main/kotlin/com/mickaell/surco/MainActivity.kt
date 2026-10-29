@@ -48,6 +48,9 @@ class MainActivity : AudioServiceActivity() {
                     result.success(null)
                 }
                 "abi" -> result.success(Build.SUPPORTED_ABIS.firstOrNull())
+                "musicDir" -> result.success(
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC).path
+                )
                 "installApk" -> {
                     val file = File(call.argument<String>("path")!!)
                     val uri = FileProvider.getUriForFile(this, "$packageName.archivos", file)

@@ -146,6 +146,43 @@ class Player extends ChangeNotifier {
     artUri: s.cover == null ? null : Uri.file(s.cover!),
   );
 
+  // --- Vista previa (recortar descargas): usa este mismo reproductor porque
+  // just_audio_background admite uno solo. Guarda la cola y la devuelve al salir.
+  ({List<Song> queue, int index, Duration position})? _beforePreview;
+
+  /// Reproduce [path] solo entre [start] y [end].
+  Future<void> preview(String path, Duration start, Duration end) async {
+    _beforePreview ??= (queue: List.of(queue), index: audio.currentIndex ?? 0, position: audio.position);
+    queue = []; // sin cola: no se guarda sesión ni se cuentan escuchas
+    notifyListeners();
+    await audio.setAudioSource(
+      ClippingAudioSource(
+        child: AudioSource.file(path),
+        start: start,
+        end: end,
+        tag: MediaItem(id: 'vista-previa', title: 'Vista previa'),
+      ),
+    );
+    audio.play();
+  }
+
+  /// Vuelve a la cola que había antes de la vista previa, en pausa.
+  Future<void> endPreview() async {
+    final b = _beforePreview;
+    if (b == null) return;
+    _beforePreview = null;
+    await audio.stop();
+    queue = b.queue;
+    if (queue.isNotEmpty) {
+      await audio.setAudioSources(
+        [for (final s in queue) AudioSource.file(s.path, tag: _media(s))],
+        initialIndex: b.index.clamp(0, queue.length - 1),
+        initialPosition: b.position,
+      );
+    }
+    notifyListeners();
+  }
+
   void toggle() => audio.playing ? audio.pause() : audio.play();
 
   Future<void> next() => audio.hasNext ? audio.seekToNext() : audio.seek(Duration.zero, index: 0);
