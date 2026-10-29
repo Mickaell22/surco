@@ -53,9 +53,11 @@ class Stats extends ChangeNotifier {
     if (listenedMs < threshold) return;
     events.add(PlayEvent(s.path, at, listenedMs));
     notifyListeners();
-    _file?.writeAsString(jsonEncode([
-      for (final e in events) [e.path, e.at.millisecondsSinceEpoch, e.ms]
-    ]));
+    _file?.writeAsString(
+      jsonEncode([
+        for (final e in events) [e.path, e.at.millisecondsSinceEpoch, e.ms],
+      ]),
+    );
   }
 
   Future<void> clear() async {
@@ -78,7 +80,7 @@ class Stats extends ChangeNotifier {
     }
     final out = [
       for (final p in plays.keys)
-        if (byPath[p] != null) SongCount(byPath[p]!, plays[p]!, ms[p]!)
+        if (byPath[p] != null) SongCount(byPath[p]!, plays[p]!, ms[p]!),
     ]..sort((a, b) => b.plays != a.plays ? b.plays - a.plays : b.ms - a.ms);
     return out.take(limit).toList();
   }

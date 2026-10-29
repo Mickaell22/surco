@@ -19,7 +19,9 @@ class SurcoMark extends StatelessWidget {
     final l = Ledger.of(context);
     return SizedBox.square(
       dimension: size,
-      child: CustomPaint(painter: _MarkPainter(disc: l.ink, groove: l.bg, label: l.accent)),
+      child: CustomPaint(
+        painter: _MarkPainter(disc: l.ink, groove: l.bg, label: l.accent),
+      ),
     );
   }
 }
@@ -56,15 +58,21 @@ class Wordmark extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = Ledger.of(context);
-    return Row(mainAxisSize: MainAxisSize.min, children: [
-      const SurcoMark(size: 26),
-      const SizedBox(width: 10),
-      Text('surco', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, letterSpacing: -.8, color: l.ink)),
-      if (seasonIcon(settings.activePalette) case final icon?) ...[
-        const SizedBox(width: 6),
-        Icon(icon, size: 18, color: l.accent),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SurcoMark(size: 26),
+        const SizedBox(width: 10),
+        Text(
+          'surco',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, letterSpacing: -.8, color: l.ink),
+        ),
+        if (seasonIcon(settings.activePalette) case final icon?) ...[
+          const SizedBox(width: 6),
+          Icon(icon, size: 18, color: l.accent),
+        ],
       ],
-    ]);
+    );
   }
 }
 
@@ -100,10 +108,12 @@ class Wordmark extends StatelessWidget {
 String _fold(String s) {
   const from = 'áéíóúüñ', to = 'aeiouun';
   final low = s.toLowerCase();
-  return String.fromCharCodes(low.runes.map((r) {
-    final i = from.indexOf(String.fromCharCode(r));
-    return i < 0 ? r : to.codeUnitAt(i);
-  }));
+  return String.fromCharCodes(
+    low.runes.map((r) {
+      final i = from.indexOf(String.fromCharCode(r));
+      return i < 0 ? r : to.codeUnitAt(i);
+    }),
+  );
 }
 
 /// Portada de lista: fondo tenido con el tono de la lista y su icono.
@@ -134,17 +144,17 @@ class PlaylistArt extends StatelessWidget {
 
 /// Pequeno guino junto al logo cuando hay un tema de temporada activo.
 IconData? seasonIcon(Palette p) => switch (p) {
-      Palette.halloween => Icons.nights_stay_outlined,
-      Palette.muertos => Icons.local_florist_outlined,
-      Palette.navidad => Icons.park_outlined,
-      Palette.anioNuevo => Icons.celebration_outlined,
-      Palette.sanValentin => Icons.favorite_rounded,
-      Palette.cumple => Icons.cake_outlined,
-      Palette.carnaval => Icons.theater_comedy_outlined,
-      Palette.sanPatricio => Icons.eco_outlined,
-      Palette.diaTierra => Icons.public_outlined,
-      Palette.diaMadre => Icons.local_florist_outlined,
-      Palette.diaPadre => Icons.emoji_events_outlined,
-      Palette.intiRaymi => Icons.wb_sunny_outlined,
-      _ => null,
-    };
+  Palette.halloween => Icons.nights_stay_outlined,
+  Palette.muertos => Icons.local_florist_outlined,
+  Palette.navidad => Icons.park_outlined,
+  Palette.anioNuevo => Icons.celebration_outlined,
+  Palette.sanValentin => Icons.favorite_rounded,
+  Palette.cumple => Icons.cake_outlined,
+  Palette.carnaval => Icons.theater_comedy_outlined,
+  Palette.sanPatricio => Icons.eco_outlined,
+  Palette.diaTierra => Icons.public_outlined,
+  Palette.diaMadre => Icons.local_florist_outlined,
+  Palette.diaPadre => Icons.emoji_events_outlined,
+  Palette.intiRaymi => Icons.wb_sunny_outlined,
+  _ => null,
+};

@@ -40,7 +40,14 @@ class Cover extends StatelessWidget {
 }
 
 class SongTile extends StatelessWidget {
-  const SongTile({super.key, required this.song, required this.onTap, this.playing = false, this.onMore, this.subtitle});
+  const SongTile({
+    super.key,
+    required this.song,
+    required this.onTap,
+    this.playing = false,
+    this.onMore,
+    this.subtitle,
+  });
   final Song song;
   final VoidCallback onTap;
   final VoidCallback? onMore;
@@ -55,35 +62,49 @@ class SongTile extends StatelessWidget {
       onLongPress: onMore,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 4, 8),
-        child: Row(children: [
-          Cover(song, size: 48),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(song.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
+        child: Row(
+          children: [
+            Cover(song, size: 48),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    song.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
                       fontSize: 15.5,
                       fontWeight: playing ? FontWeight.w700 : FontWeight.w500,
-                      color: playing ? l.accent : l.ink)),
-              const SizedBox(height: 2),
-              Text(subtitle ?? song.artist,
-                  maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13.5, color: l.inkSoft)),
-            ]),
-          ),
-          const SizedBox(width: 8),
-          Text(fmtDur(song.durationMs > 0 ? song.duration : null),
-              style: TextStyle(fontSize: 12.5, color: l.muted, fontFeatures: tabular)),
-          if (onMore != null)
-            IconButton(
-              tooltip: 'Opciones',
-              onPressed: onMore,
-              icon: Icon(Icons.more_vert_rounded, color: l.muted, size: 20),
-            )
-          else
-            const SizedBox(width: 12),
-        ]),
+                      color: playing ? l.accent : l.ink,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle ?? song.artist,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 13.5, color: l.inkSoft),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              fmtDur(song.durationMs > 0 ? song.duration : null),
+              style: TextStyle(fontSize: 12.5, color: l.muted, fontFeatures: tabular),
+            ),
+            if (onMore != null)
+              IconButton(
+                tooltip: 'Opciones',
+                onPressed: onMore,
+                icon: Icon(Icons.more_vert_rounded, color: l.muted, size: 20),
+              )
+            else
+              const SizedBox(width: 12),
+          ],
+        ),
       ),
     );
   }
@@ -106,22 +127,31 @@ class GroupTile extends StatelessWidget {
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: Row(children: [
-          art ?? Cover(withCover, size: 52, radius: 10),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, color: l.ink)),
-              const SizedBox(height: 2),
-              Text('${songs.length} ${songs.length == 1 ? 'canción' : 'canciones'} · ${fmtDur(Duration(milliseconds: total))}',
-                  style: TextStyle(fontSize: 13, color: l.muted, fontFeatures: tabular)),
-            ]),
-          ),
-          Icon(Icons.chevron_right_rounded, color: l.muted),
-        ]),
+        child: Row(
+          children: [
+            art ?? Cover(withCover, size: 52, radius: 10),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, color: l.ink),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${songs.length} ${songs.length == 1 ? 'canción' : 'canciones'} · ${fmtDur(Duration(milliseconds: total))}',
+                    style: TextStyle(fontSize: 13, color: l.muted, fontFeatures: tabular),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded, color: l.muted),
+          ],
+        ),
       ),
     );
   }
@@ -139,14 +169,25 @@ class EmptyState extends StatelessWidget {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 40, color: l.muted),
-          const SizedBox(height: 14),
-          Text(title, textAlign: TextAlign.center, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: l.ink)),
-          const SizedBox(height: 6),
-          Text(body, textAlign: TextAlign.center, style: TextStyle(fontSize: 14, height: 1.45, color: l.inkSoft)),
-          if (action != null) ...[const SizedBox(height: 18), action!],
-        ]),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 40, color: l.muted),
+            const SizedBox(height: 14),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: l.ink),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              body,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, height: 1.45, color: l.inkSoft),
+            ),
+            if (action != null) ...[const SizedBox(height: 18), action!],
+          ],
+        ),
       ),
     );
   }

@@ -87,21 +87,42 @@ class Ledger extends ThemeExtension<Ledger> {
       final acc = dark ? accD : accL;
       base = dark
           ? Ledger(
-              bg: n(.085), surface: n(.11), surfaceAlt: n(.135), sunken: n(.06),
-              ink: n(.95, .5), inkSoft: n(.78, .6), muted: n(.58, .6), line: n(.2),
-              accent: acc, accentSoft: Color.alphaBlend(acc.withValues(alpha: .18), n(.085)),
+              bg: n(.085),
+              surface: n(.11),
+              surfaceAlt: n(.135),
+              sunken: n(.06),
+              ink: n(.95, .5),
+              inkSoft: n(.78, .6),
+              muted: n(.58, .6),
+              line: n(.2),
+              accent: acc,
+              accentSoft: Color.alphaBlend(acc.withValues(alpha: .18), n(.085)),
             )
           : Ledger(
-              bg: n(.955), surface: n(.985), surfaceAlt: n(.97), sunken: n(.925),
-              ink: n(.1, 1.5), inkSoft: n(.32), muted: n(.47, .8), line: n(.86),
-              accent: acc, accentSoft: Color.alphaBlend(acc.withValues(alpha: .12), n(.985)),
+              bg: n(.955),
+              surface: n(.985),
+              surfaceAlt: n(.97),
+              sunken: n(.925),
+              ink: n(.1, 1.5),
+              inkSoft: n(.32),
+              muted: n(.47, .8),
+              line: n(.86),
+              accent: acc,
+              accentSoft: Color.alphaBlend(acc.withValues(alpha: .12), n(.985)),
             );
     }
     if (dark && pureBlack) {
       base = Ledger(
-        bg: Colors.black, surface: const Color(0xFF0E0E0E), surfaceAlt: const Color(0xFF151515),
-        sunken: Colors.black, ink: base.ink, inkSoft: base.inkSoft, muted: base.muted,
-        line: const Color(0xFF262626), accent: base.accent, accentSoft: base.accentSoft,
+        bg: Colors.black,
+        surface: const Color(0xFF0E0E0E),
+        surfaceAlt: const Color(0xFF151515),
+        sunken: Colors.black,
+        ink: base.ink,
+        inkSoft: base.inkSoft,
+        muted: base.muted,
+        line: const Color(0xFF262626),
+        accent: base.accent,
+        accentSoft: base.accentSoft,
       );
     }
     return base;

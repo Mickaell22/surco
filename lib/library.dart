@@ -33,14 +33,26 @@ class Song {
   Duration get duration => Duration(milliseconds: durationMs);
 
   Map<String, dynamic> toJson() => {
-        'p': path, 'm': mtime, 't': title, 'a': artist, 'b': album,
-        'd': durationMs, 'c': cover, 'l': hasLyrics,
-      };
+    'p': path,
+    'm': mtime,
+    't': title,
+    'a': artist,
+    'b': album,
+    'd': durationMs,
+    'c': cover,
+    'l': hasLyrics,
+  };
 
   factory Song.fromJson(Map<String, dynamic> j) => Song(
-        path: j['p'], mtime: j['m'], title: j['t'], artist: j['a'], album: j['b'],
-        durationMs: j['d'], cover: j['c'], hasLyrics: j['l'] ?? false,
-      );
+    path: j['p'],
+    mtime: j['m'],
+    title: j['t'],
+    artist: j['a'],
+    album: j['b'],
+    durationMs: j['d'],
+    cover: j['c'],
+    hasLyrics: j['l'] ?? false,
+  );
 }
 
 class Playlist {
@@ -74,7 +86,9 @@ class Library extends ChangeNotifier {
         songs = raw.map((e) => Song.fromJson(e)).toList();
         byPath = {for (final s in songs) s.path: s};
         notifyListeners();
-      } catch (_) {/* cache corrupta: se reconstruye en el scan */}
+      } catch (_) {
+        /* cache corrupta: se reconstruye en el scan */
+      }
     }
     final hadCache = songs.isNotEmpty;
     if (hadCache) onReady?.call();
@@ -92,14 +106,10 @@ class Library extends ChangeNotifier {
       final coverDir = '${_cacheDir.path}/covers';
       final roots = settings.scope == LibraryScope.all ? _rootAll : _rootsMusic;
       final result = await _runScan(roots, known, coverDir);
-      songs = result.$1
-          .where((s) => !settings.ignoreShort || s.durationMs == 0 || s.durationMs >= 30000)
-          .toList()
+      songs = result.$1.where((s) => !settings.ignoreShort || s.durationMs == 0 || s.durationMs >= 30000).toList()
         ..sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
       byPath = {for (final s in songs) s.path: s};
-      playlists = [
-        for (final p in result.$2) _readPlaylist(p, byPath),
-      ].where((p) => p.songs.isNotEmpty).toList()
+      playlists = [for (final p in result.$2) _readPlaylist(p, byPath)].where((p) => p.songs.isNotEmpty).toList()
         ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
       await _cacheFile.writeAsString(jsonEncode(songs.map((s) => s.toJson()).toList()));
     } catch (e) {
@@ -122,12 +132,12 @@ class Library extends ChangeNotifier {
 
   /// Letra embebida en el archivo; se lee bajo demanda para no tenerla en RAM.
   static Future<String?> lyricsOf(Song s) => Isolate.run(() {
-        try {
-          return readMetadata(File(s.path)).lyrics;
-        } catch (_) {
-          return null;
-        }
-      });
+    try {
+      return readMetadata(File(s.path)).lyrics;
+    } catch (_) {
+      return null;
+    }
+  });
 }
 
 // ponytail: rutas fijas del almacenamiento compartido de Android. Si algun dia
@@ -137,9 +147,30 @@ const _rootAll = ['/storage/emulated/0'];
 
 /// Carpetas que nunca son musica: notas de voz, grabaciones, tonos del sistema.
 const _skipDirs = {
-  'android', 'dcim', 'pictures', 'movies', 'whatsapp', 'telegram', 'recordings',
-  'call', 'callrecordings', 'callrecord', 'phonerecord', 'record', 'recorder', 'voicerecorder', 'voice recorder', 'soundrecorder', 'ringtones', 'notifications',
-  'alarms', 'audiobooks', 'podcasts', 'whatsapp audio', 'whatsapp voice notes', 'voice notes',
+  'android',
+  'dcim',
+  'pictures',
+  'movies',
+  'whatsapp',
+  'telegram',
+  'recordings',
+  'call',
+  'callrecordings',
+  'callrecord',
+  'phonerecord',
+  'record',
+  'recorder',
+  'voicerecorder',
+  'voice recorder',
+  'soundrecorder',
+  'ringtones',
+  'notifications',
+  'alarms',
+  'audiobooks',
+  'podcasts',
+  'whatsapp audio',
+  'whatsapp voice notes',
+  'voice notes',
 };
 
 /// Fuera de la clase a proposito: un closure de Isolate.run creado dentro de un
@@ -217,7 +248,14 @@ Song? _readSong(File f, Song? cached, String coverDir) {
     );
   } catch (_) {
     // Archivo sin tags legibles: igual se puede reproducir.
-    return Song(path: f.path, mtime: mtime, title: baseName, artist: 'Artista desconocido', album: 'Sin álbum', durationMs: 0);
+    return Song(
+      path: f.path,
+      mtime: mtime,
+      title: baseName,
+      artist: 'Artista desconocido',
+      album: 'Sin álbum',
+      durationMs: 0,
+    );
   }
 }
 

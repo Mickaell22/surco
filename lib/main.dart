@@ -68,14 +68,14 @@ class _SurcoAppState extends State<SurcoApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
-        listenable: settings,
-        builder: (_, _) => MaterialApp(
-          title: 'Surco',
-          debugShowCheckedModeBanner: false,
-          themeMode: settings.mode,
-          theme: buildTheme(Brightness.light, settings.activePalette),
-          darkTheme: buildTheme(Brightness.dark, settings.activePalette, pureBlack: settings.pureBlack),
-          home: const Home(),
-        ),
-      );
+    listenable: settings,
+    builder: (_, _) => MaterialApp(
+      title: 'Surco',
+      debugShowCheckedModeBanner: false,
+      themeMode: settings.mode,
+      theme: buildTheme(Brightness.light, settings.activePalette),
+      darkTheme: buildTheme(Brightness.dark, settings.activePalette, pureBlack: settings.pureBlack),
+      home: const Home(),
+    ),
+  );
 }
