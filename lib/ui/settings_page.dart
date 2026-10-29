@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../main.dart';
+import '../native.dart';
 import '../settings.dart';
 import '../theme.dart';
 import 'brand.dart';
@@ -210,6 +211,15 @@ class SettingsPage extends StatelessWidget {
               title: Text('Volver a escanear ahora', style: TextStyle(color: l.ink)),
               onTap: library.scan,
             ),
+            ListTile(
+              leading: Icon(Icons.save_alt_rounded, color: l.inkSoft),
+              title: Text('Copia de seguridad', style: TextStyle(color: l.ink)),
+              subtitle: Text(
+                'Copia canciones y listas a la carpeta que elijas (SD, USB, Drive). Repetirla solo copia lo nuevo.',
+                style: TextStyle(color: l.inkSoft),
+              ),
+              onTap: () => _backup(context),
+            ),
             const _Section('Estadísticas'),
             ListTile(
               leading: Icon(Icons.delete_outline_rounded, color: l.inkSoft),
@@ -415,4 +425,42 @@ class _Swatch extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<void> _backup(BuildContext context) async {
+  final tree = await pickFolder();
+  if (tree == null || !context.mounted) return;
+  final files = [
+    for (final s in library.songs) s.path,
+    for (final p in library.playlists) ?p.path,
+  ];
+  final progress = ValueNotifier((0, files.length));
+  showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => PopScope(
+      canPop: false,
+      child: AlertDialog(
+        title: const Text('Copiando música'),
+        content: ValueListenableBuilder(
+          valueListenable: progress,
+          builder: (_, p, _) => Column(mainAxisSize: MainAxisSize.min, children: [
+            LinearProgressIndicator(value: p.$2 == 0 ? null : p.$1 / p.$2),
+            const SizedBox(height: 12),
+            Text('${p.$1} de ${p.$2} archivos'),
+          ]),
+        ),
+      ),
+    ),
+  );
+  String message;
+  try {
+    final r = await backup(tree, files, (done, total) => progress.value = (done, total));
+    message = 'Copiadas ${r.copied}, ya estaban ${r.skipped}${r.failed > 0 ? ', fallaron ${r.failed}' : ''}.';
+  } catch (e) {
+    message = 'No se pudo copiar: $e';
+  }
+  if (!context.mounted) return;
+  Navigator.of(context, rootNavigator: true).pop();
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), persist: false));
 }

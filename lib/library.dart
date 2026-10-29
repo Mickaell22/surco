@@ -56,9 +56,12 @@ class Song {
 }
 
 class Playlist {
-  Playlist(this.name, this.songs);
+  Playlist(this.name, this.songs, {this.path});
   final String name;
   final List<Song> songs;
+
+  /// Archivo .m3u de origen; null en las listas automáticas.
+  final String? path;
 }
 
 /// Biblioteca local: escanea el almacenamiento, guarda una cache JSON y
@@ -272,7 +275,7 @@ Playlist _readPlaylist(String path, Map<String, Song> byPath) {
       if (s != null) songs.add(s);
     }
   } catch (_) {}
-  return Playlist(name, songs);
+  return Playlist(name, songs, path: path);
 }
 
 String _ext(String name) {
