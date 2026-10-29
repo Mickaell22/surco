@@ -187,7 +187,10 @@ class _HomeState extends State<Home> {
         Positioned.fill(
           child: ListenableBuilder(
             listenable: settings,
-            builder: (_, _) => SeasonDecor(anchorTop: decorTop),
+            builder: (_, _) => SeasonDecor(
+              anchorTop: decorTop,
+              barY: _searching ? null : MediaQuery.paddingOf(context).top + kToolbarHeight / 2,
+            ),
           ),
         ),
       ],

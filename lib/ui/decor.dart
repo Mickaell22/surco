@@ -11,8 +11,12 @@ import '../theme.dart';
 /// [anchorTop] es donde termina la barra superior (de ahí cuelgan la araña,
 /// las luces o el papel picado).
 class SeasonDecor extends StatefulWidget {
-  const SeasonDecor({super.key, required this.anchorTop});
+  const SeasonDecor({super.key, required this.anchorTop, this.barY});
   final double anchorTop;
+
+  /// Centro vertical de la barra superior cuando tiene un hueco libre entre el
+  /// logo y los íconos (solo en inicio): ahí van las calabazas y la luna.
+  final double? barY;
 
   @override
   State<SeasonDecor> createState() => _SeasonDecorState();
@@ -44,7 +48,14 @@ class _SeasonDecorState extends State<SeasonDecor> with SingleTickerProviderStat
       child: RepaintBoundary(
         child: CustomPaint(
           size: Size.infinite,
-          painter: _DecorPainter(p, l, dark, widget.anchorTop, still ? const AlwaysStoppedAnimation(.3) : _c),
+          painter: _DecorPainter(
+            p,
+            l,
+            dark,
+            widget.anchorTop,
+            widget.barY,
+            still ? const AlwaysStoppedAnimation(.3) : _c,
+          ),
         ),
       ),
     );
@@ -52,11 +63,12 @@ class _SeasonDecorState extends State<SeasonDecor> with SingleTickerProviderStat
 }
 
 class _DecorPainter extends CustomPainter {
-  _DecorPainter(this.p, this.l, this.dark, this.top, this.t) : super(repaint: t);
+  _DecorPainter(this.p, this.l, this.dark, this.top, this.barY, this.t) : super(repaint: t);
   final Palette p;
   final Ledger l;
   final bool dark;
   final double top;
+  final double? barY;
   final Animation<double> t;
 
   @override
@@ -64,15 +76,7 @@ class _DecorPainter extends CustomPainter {
     final v = t.value;
     switch (p) {
       case Palette.halloween:
-        // Telarañas en las esquinas de la pantalla, lejos del contenido.
-        _web(c, Offset(s.width, 0), 120, l.ink.withValues(alpha: .2));
-        _web(c, Offset(0, s.height), 80, l.ink.withValues(alpha: .14), flip: true);
-        // La araña se balancea en el hueco libre de la fila "Aleatorio".
-        _spider(c, Offset(s.width * .62, top), 26 + 10 * sin(v * 2 * pi * 2), v);
-        for (var i = 0; i < 2; i++) {
-          final x = s.width * (1.15 - ((v + i * .5) % 1) * 1.3);
-          _bat(c, Offset(x, top + 40 + i * 70 + 12 * sin((v + i) * 2 * pi * 3)), 10, v * 40 + i);
-        }
+        _halloween(c, s, v);
       case Palette.navidad:
         _lights(c, s.width, top, v);
         _snow(c, s, v, 16);
@@ -107,20 +111,140 @@ class _DecorPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_DecorPainter old) => old.p != p || old.l != l || old.dark != dark || old.top != top;
+  bool shouldRepaint(_DecorPainter old) =>
+      old.p != p || old.l != l || old.dark != dark || old.top != top || old.barY != barY;
 
   // --- Halloween ---
+  // Todo lo que pasa sobre la lista va traslúcido; lo opaco vive en los márgenes
+  // (esquinas, hueco de la barra, fila "Aleatorio"). Nunca bloquea toques.
 
-  void _web(Canvas c, Offset corner, double r, Color color, {bool flip = false}) {
+  void _halloween(Canvas c, Size s, double v) {
+    const purple = Color(0xFF6B2FA0);
+    // Viñeta morada: la pantalla entera se siente de noche sin tapar nada.
+    c.drawRect(
+      Offset.zero & s,
+      Paint()
+        ..shader = RadialGradient(
+          radius: .95,
+          colors: [
+            purple.withValues(alpha: 0),
+            purple.withValues(alpha: dark ? .22 : .12),
+          ],
+          stops: const [.55, 1],
+        ).createShader(Offset.zero & s),
+    );
+    _fog(c, s, v);
+    // Telarañas: esquina superior derecha, inferior izquierda, y una chica
+    // bajo las pestañas a la izquierda.
+    final webInk = l.ink.withValues(alpha: dark ? .26 : .2);
+    _web(c, Offset(s.width, 0), 130, webInk, base: pi / 2);
+    _web(c, Offset(0, s.height), 96, webInk, base: -pi / 2);
+    _web(c, Offset(0, top), 54, webInk.withValues(alpha: webInk.a * .8), base: 0);
+    _web(
+      c,
+      Offset(s.width, s.height * .58),
+      46,
+      webInk.withValues(alpha: webInk.a * .7),
+      base: pi / 2,
+      span: pi,
+    );
+    for (var i = 0; i < 3; i++) {
+      _ghost(c, s, v, i);
+    }
+    // Murciélagos de varios tamaños cruzando a distinta altura y velocidad.
+    for (var i = 0; i < 5; i++) {
+      final speed = [1.0, 1.0, 2.0, 1.0, 2.0][i];
+      final prog = (v * speed + i * .23) % 1;
+      final x = s.width * (1.15 - prog * 1.3);
+      final y = top + 24 + i * 46 + 14 * sin((v * speed + i) * 2 * pi * 3);
+      _bat(c, Offset(x, y), [11.0, 8.0, 6.0, 13.0, 7.0][i], v * 40 * speed + i);
+    }
+    // Dos arañas en el hueco libre de la fila "Aleatorio".
+    _spider(c, Offset(s.width * .62, top), 26 + 10 * sin(v * 2 * pi * 2), v);
+    _spider(c, Offset(s.width * .48, top), 12 + 6 * sin(v * 2 * pi * 3 + 1), v + .3, scale: .7);
+    if (barY case final y?) _barScene(c, s, y, v);
+  }
+
+  /// Calabazas con vela que titila y una luna, en el hueco de la barra superior
+  /// entre el logo y la lupa.
+  void _barScene(Canvas c, Size s, double y, double v) {
+    final x0 = 162.0, x1 = s.width - 112;
+    if (x1 - x0 < 90) return; // pantalla angosta: no hay hueco
+    final moon = Offset(x1 - 8, y - 2);
+    c.drawCircle(moon, 20, Paint()..color = const Color(0xFFF3E3A8).withValues(alpha: .12));
+    c.drawPath(
+      Path.combine(
+        PathOperation.difference,
+        Path()..addOval(Rect.fromCircle(center: moon, radius: 10)),
+        Path()..addOval(Rect.fromCircle(center: moon + const Offset(-5, -3), radius: 9)),
+      ),
+      Paint()..color = dark ? const Color(0xFFF3E3A8).withValues(alpha: .9) : const Color(0xFFE0A93A),
+    );
+    for (final (dx, r, phase) in [(0.0, 8.0, 0.0), (26.0, 11.0, .4), (54.0, 7.0, .8)]) {
+      final o = Offset(x0 + dx, y + 12 - r * .9);
+      // Titileo de vela: dos senos de frecuencias distintas, nunca regular.
+      final flick = .55 + .25 * sin((v * 23 + phase) * 2 * pi) + .2 * sin((v * 37 + phase) * 2 * pi);
+      c.drawCircle(o, r * 2.1, Paint()..color = const Color(0xFFFFA43A).withValues(alpha: .16 * flick));
+      pumpkin(c, o, r, face: true, glow: flick);
+    }
+  }
+
+  void _ghost(Canvas c, Size s, double v, int i) {
+    final r = Random(500 + i);
+    // Suben despacio de abajo hacia arriba meciéndose; cada uno a su ritmo.
+    final prog = (v * (.6 + i * .25) + r.nextDouble()) % 1;
+    final x = s.width * (.12 + .38 * i) + 26 * sin((prog * 2 + i) * 2 * pi);
+    final y = s.height * 1.05 - prog * (s.height * 1.2);
+    final size = 20.0 + i * 5;
+    final fade = sin(prog * pi); // aparece y se desvanece en los extremos
+    final body = Path()
+      ..moveTo(x - size * .55, y + size * .55)
+      ..lineTo(x - size * .55, y - size * .1)
+      ..arcToPoint(Offset(x + size * .55, y - size * .1), radius: Radius.circular(size * .55))
+      ..lineTo(x + size * .55, y + size * .55);
+    // Borde inferior ondulado que se mueve.
+    for (var k = 0; k < 4; k++) {
+      final x2 = x + size * .55 - size * .275 * (k + 1);
+      final dy = (k.isEven ? 1 : -1) * size * .12 * (1 + .4 * sin((v * 8 + i) * 2 * pi));
+      body.quadraticBezierTo(x2 + size * .14, y + size * .55 + dy, x2, y + size * .55);
+    }
+    body.close();
+    final fill = dark ? Colors.white.withValues(alpha: .16 * fade) : Colors.white.withValues(alpha: .75 * fade);
+    c.drawPath(body, Paint()..color = fill);
+    if (!dark) {
+      c.drawPath(
+        body,
+        Paint()
+          ..color = l.ink.withValues(alpha: .14 * fade)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1,
+      );
+    }
+    final eye = Paint()..color = l.ink.withValues(alpha: (dark ? .55 : .45) * fade);
+    c.drawOval(Rect.fromCenter(center: Offset(x - size * .18, y), width: size * .13, height: size * .2), eye);
+    c.drawOval(Rect.fromCenter(center: Offset(x + size * .18, y), width: size * .13, height: size * .2), eye);
+  }
+
+  /// Niebla baja que se arrastra al ras de la pantalla.
+  void _fog(Canvas c, Size s, double v) {
+    final paint = Paint()
+      ..color = (dark ? const Color(0xFFB9A8D0) : const Color(0xFF8C7BA8)).withValues(alpha: dark ? .12 : .09)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18);
+    for (var i = 0; i < 5; i++) {
+      final x = ((v * (i.isEven ? 1 : -1) + i * .21) % 1) * (s.width + 240) - 120;
+      final y = s.height - 30 - (i % 3) * 22;
+      c.drawOval(Rect.fromCenter(center: Offset(x, y), width: 220, height: 60), paint);
+    }
+  }
+
+  void _web(Canvas c, Offset corner, double r, Color color, {double base = pi / 2, double span = pi / 2}) {
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
-    // Radios desde la esquina hacia el interior de la pantalla.
-    final base = flip ? -pi / 2 : pi / 2;
-    final angles = [for (var i = 0; i <= 5; i++) base + i * (pi / 2) / 5];
-    // Esquina superior derecha: angulos pi/2..pi (hacia la izquierda y abajo);
-    // inferior izquierda: -pi/2..0 (hacia la derecha y arriba).
+    // Radios desde [corner] en abanico de [span] radianes a partir de [base]
+    // (pi/2 = hacia abajo, y el giro avanza hacia la izquierda).
+    final angles = [for (var i = 0; i <= 5; i++) base + i * span / 5];
     Offset at(double a, double d) => corner + Offset(cos(a), sin(a)) * d;
     for (final a in angles) {
       c.drawLine(corner, at(a, r), paint);
@@ -138,7 +262,16 @@ class _DecorPainter extends CustomPainter {
     }
   }
 
-  void _spider(Canvas c, Offset anchor, double len, double v) {
+  void _spider(Canvas c, Offset anchor, double len, double v, {double scale = 1}) {
+    if (scale != 1) {
+      c.save();
+      c.translate(anchor.dx, anchor.dy);
+      c.scale(scale);
+      c.translate(-anchor.dx, -anchor.dy);
+      _spider(c, anchor, len / scale, v);
+      c.restore();
+      return;
+    }
     final body = anchor + Offset(0, len);
     c.drawLine(
       anchor,
@@ -163,11 +296,12 @@ class _DecorPainter extends CustomPainter {
         final knee = hip + Offset(side * cos(ang) * 10, sin(ang) * 10 - 4);
         final foot = knee + Offset(side * 5, 8);
         c.drawPath(
-            Path()
-              ..moveTo(hip.dx, hip.dy)
-              ..lineTo(knee.dx, knee.dy)
-              ..lineTo(foot.dx, foot.dy),
-            outline);
+          Path()
+            ..moveTo(hip.dx, hip.dy)
+            ..lineTo(knee.dx, knee.dy)
+            ..lineTo(foot.dx, foot.dy),
+          outline,
+        );
       }
     }
     c.drawOval(Rect.fromCenter(center: body + const Offset(0, 4), width: 13, height: 15), ink);
@@ -404,6 +538,42 @@ void _heart(Canvas c, Offset o, double size, Color color) {
   c.drawPath(path, Paint()..color = color);
 }
 
+/// Calabaza de Halloween; con [face] lleva ojos y boca, que se iluminan según
+/// [glow] (0 = apagada, 1 = vela fuerte).
+void pumpkin(Canvas c, Offset o, double r, {bool face = false, double glow = 0}) {
+  final body = Paint()..color = const Color(0xFFE8771E);
+  final rib = Paint()..color = const Color(0xFFC95F10);
+  c.drawOval(Rect.fromCenter(center: o, width: r * 2.3, height: r * 1.8), body);
+  c.drawOval(Rect.fromCenter(center: o, width: r * 1.2, height: r * 1.8), rib);
+  c.drawOval(Rect.fromCenter(center: o, width: r * .5, height: r * 1.75), body);
+  c.drawRRect(
+    RRect.fromRectAndRadius(
+      Rect.fromCenter(center: o - Offset(-r * .1, r * 1.0), width: r * .35, height: r * .6),
+      const Radius.circular(2),
+    ),
+    Paint()..color = const Color(0xFF5C7A2E),
+  );
+  if (!face) return;
+  final f = Paint()..color = Color.lerp(const Color(0xFF2A1A0E), const Color(0xFFFFD25A), glow)!;
+  for (final dx in [-.45, .45]) {
+    c.drawPath(
+      Path()
+        ..moveTo(o.dx + r * dx - r * .2, o.dy - r * .05)
+        ..lineTo(o.dx + r * dx + r * .2, o.dy - r * .05)
+        ..lineTo(o.dx + r * dx, o.dy - r * .4)
+        ..close(),
+      f,
+    );
+  }
+  c.drawPath(
+    Path()
+      ..moveTo(o.dx - r * .6, o.dy + r * .25)
+      ..quadraticBezierTo(o.dx, o.dy + r * .8, o.dx + r * .6, o.dy + r * .25)
+      ..quadraticBezierTo(o.dx, o.dy + r * .5, o.dx - r * .6, o.dy + r * .25),
+    f,
+  );
+}
+
 /// Adorno estático chico para la pantalla de reproducción (entre Letra y Cola):
 /// calabazas, flores, regalo, estrella, corazón o pastel según la temporada.
 class SeasonBadge extends StatelessWidget {
@@ -429,8 +599,8 @@ class _BadgePainter extends CustomPainter {
   void paint(Canvas c, Size s) {
     switch (p) {
       case Palette.halloween:
-        _pumpkin(c, Offset(s.width * .34, s.height * .62), 15, face: true);
-        _pumpkin(c, Offset(s.width * .7, s.height * .7), 11);
+        pumpkin(c, Offset(s.width * .34, s.height * .62), 15, face: true);
+        pumpkin(c, Offset(s.width * .7, s.height * .7), 11);
       case Palette.muertos:
         for (final (x, r) in [(.3, 10.0), (.55, 13.0), (.8, 9.0)]) {
           _marigold(c, Offset(s.width * x, s.height * .55), r);
@@ -503,40 +673,6 @@ class _BadgePainter extends CustomPainter {
       default:
         break;
     }
-  }
-
-  void _pumpkin(Canvas c, Offset o, double r, {bool face = false}) {
-    final body = Paint()..color = const Color(0xFFE8771E);
-    final rib = Paint()..color = const Color(0xFFC95F10);
-    c.drawOval(Rect.fromCenter(center: o, width: r * 2.3, height: r * 1.8), body);
-    c.drawOval(Rect.fromCenter(center: o, width: r * 1.2, height: r * 1.8), rib);
-    c.drawOval(Rect.fromCenter(center: o, width: r * .5, height: r * 1.75), body);
-    c.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(center: o - Offset(-r * .1, r * 1.0), width: r * .35, height: r * .6),
-        const Radius.circular(2),
-      ),
-      Paint()..color = const Color(0xFF5C7A2E),
-    );
-    if (!face) return;
-    final f = Paint()..color = const Color(0xFF2A1A0E);
-    for (final dx in [-.45, .45]) {
-      c.drawPath(
-        Path()
-          ..moveTo(o.dx + r * dx - r * .2, o.dy - r * .05)
-          ..lineTo(o.dx + r * dx + r * .2, o.dy - r * .05)
-          ..lineTo(o.dx + r * dx, o.dy - r * .4)
-          ..close(),
-        f,
-      );
-    }
-    c.drawPath(
-      Path()
-        ..moveTo(o.dx - r * .6, o.dy + r * .25)
-        ..quadraticBezierTo(o.dx, o.dy + r * .8, o.dx + r * .6, o.dy + r * .25)
-        ..quadraticBezierTo(o.dx, o.dy + r * .5, o.dx - r * .6, o.dy + r * .25),
-      f,
-    );
   }
 
   void _marigold(Canvas c, Offset o, double r) {
