@@ -21,12 +21,13 @@
 
 [![Letras](https://img.shields.io/badge/letras_sincronizadas-1A1714?style=for-the-badge)](#funciones)
 [![Estadísticas](https://img.shields.io/badge/estadísticas_locales-1A1714?style=for-the-badge)](#estadísticas-y-listas-automáticas)
+[![YouTube](https://img.shields.io/badge/descargas_de_YouTube-1A1714?style=for-the-badge)](#descargar-de-youtube)
 [![Temas](https://img.shields.io/badge/temas_y_temporadas-1A1714?style=for-the-badge)](#temas)
 [![Ligera](https://img.shields.io/badge/ligera-1A1714?style=for-the-badge)](#por-qué-es-ligera)
 
 <br/>
 
-[Descargar](#descargar) • [Funciones](#funciones) • [Temas](#temas) • [Poner tu música](#poner-tu-música) • [Privacidad](#privacidad) • [Desarrollo](#desarrollo)
+[Descargar](#descargar) • [Funciones](#funciones) • [YouTube](#descargar-de-youtube) • [Temas](#temas) • [Poner tu música](#poner-tu-música) • [Privacidad](#privacidad) • [Desarrollo](#desarrollo)
 
 <br/>
 
@@ -60,6 +61,21 @@ Los enlaces bajan siempre la versión más reciente; las anteriores y sus cambio
 - **Retomar** la última cola y posición al abrir la app.
 - **Pausar** al desconectar los audífonos (cable o Bluetooth), para que la música no salga por el parlante.
 - **Saltar silencios** largos al inicio y final de las pistas.
+- **Ecualizador** del teléfono con preajustes (Graves, Voz, Agudos, Rock, Pop), ajuste por banda y volumen extra.
+- **Compartir** la pista por WhatsApp, Telegram, Bluetooth o cualquier app.
+- **Copia de seguridad** de canciones y listas a la carpeta que elijas (SD, USB, Drive). Repetirla en la misma carpeta solo copia lo nuevo.
+- **Actualizaciones**: una vez al día revisa si hay versión nueva aquí en GitHub, la baja y abre el instalador. Se puede apagar.
+
+## Descargar de YouTube
+
+Pega el link en ⋮ → *Descargar de YouTube*, o desde la app de YouTube toca *Compartir* → *Surco*.
+
+1. Elige la calidad (por defecto la mejor en `.m4a`, normalmente 128 kbps).
+2. Recorta el inicio o el final (intros, despedidas) con vista previa. El recorte copia el audio tal cual, sin recomprimir.
+3. Revisa título, artista y álbum (salen limpios del nombre del video), la portada (miniatura recortada cuadrada) y la letra de [lrclib](https://lrclib.net), sincronizada si existe.
+4. Se guarda en `Music/Surco` con todo dentro del archivo.
+
+> YouTube no permite descargar en sus términos de servicio: úsalo para tu música y bajo tu responsabilidad. YouTube cambia su sistema seguido, así que la descarga puede dejar de funcionar hasta la siguiente versión de Surco.
 
 ## Estadísticas y listas automáticas
 
@@ -104,11 +120,19 @@ Por defecto solo busca en `Music` y `Download` e ignora audios de menos de 30 se
 
 ## Privacidad
 
-Surco no tiene cuentas, anuncios, analítica ni conexión a internet. La biblioteca, las estadísticas y la configuración se guardan solo en el teléfono, y "Borrar historial de escuchas" en Configuración elimina las estadísticas.
+Surco no tiene cuentas, anuncios ni analítica. La biblioteca, las estadísticas y la configuración se guardan solo en el teléfono, y "Borrar historial de escuchas" en Configuración elimina las estadísticas.
+
+Solo usa internet para:
+
+- **Descargar de YouTube**, cuando lo usas: YouTube, la miniatura del video y la letra en lrclib.net.
+- **Buscar actualizaciones**: una consulta al día a la API pública de GitHub (se apaga en Configuración → Acerca de).
+
+Nunca envía tu biblioteca, tus escuchas ni nada del teléfono.
 
 ## Por qué es ligera
 
-- Pocas dependencias: `just_audio` (+ `just_audio_background`), `audio_session`, `audio_metadata_reader` (Dart puro), `permission_handler`, `path_provider`.
+- Pocas dependencias: `just_audio` (+ `just_audio_background`), `audio_session`, `audio_metadata_reader` (Dart puro), `permission_handler`, `path_provider` y `youtube_explode_dart` (Dart puro).
+- Ecualizador, recorte de audio, compartir y copia de seguridad usan lo que trae Android (efectos de audio, `MediaMuxer`, `FileProvider`, selector de carpetas): sin ffmpeg ni paquetes extra.
 - Tipografía del sistema; no descarga fuentes.
 - Las portadas se extraen una vez a caché en disco y se decodifican al tamaño de la miniatura.
 - El escaneo corre en un isolate y solo relee archivos nuevos o modificados.
