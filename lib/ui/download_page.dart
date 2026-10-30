@@ -103,7 +103,7 @@ class _DownloadPageState extends State<DownloadPage> {
     } catch (e) {
       setState(() {
         _step = _Step.choose;
-        _error = 'Falló la descarga: $e';
+        _error = e is YoutubeBlocked ? '$e' : 'Falló la descarga: $e';
       });
     }
   }

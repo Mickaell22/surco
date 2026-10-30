@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -52,23 +53,61 @@ Future<VideoInfo> fetchInfo(String url) async {
   return (title: title, artist: artist);
 }
 
+/// YouTube no entregó el audio completo de este video.
+class YoutubeBlocked implements Exception {
+  const YoutubeBlocked();
+
+  @override
+  String toString() =>
+      'YouTube bloqueó la descarga de este video (pide una verificación anti-bots). Prueba con otra versión de '
+      'la canción, por ejemplo la de YouTube Music, o bájala desde la PC.';
+}
+
 /// Baja el audio a un archivo temporal. [onProgress] va de 0 a 1.
 Future<File> downloadAudio(AudioOnlyStreamInfo stream, void Function(double) onProgress) async {
   final file = File('${(await getTemporaryDirectory()).path}/yt-${DateTime.now().millisecondsSinceEpoch}.m4a');
   final yt = YoutubeExplode();
   final sink = file.openWrite();
+  var got = 0;
+  final total = stream.size.totalBytes;
+  // Si YouTube niega el audio (videos que exigen verificación anti-bots), el
+  // paquete vuelve a pedir el manifiesto en bucle sin entregar nada. Sin datos
+  // en 20 s se corta con un aviso. Se escucha a mano y se cancela sin esperar:
+  // un `await for` esperaría a que ese bucle termine, y nunca termina.
+  final done = Completer<void>();
+  Timer? idle;
+  void fail(Object e) => done.isCompleted ? null : done.completeError(e);
+  void arm() {
+    idle?.cancel();
+    idle = Timer(const Duration(seconds: 20), () => fail(const YoutubeBlocked()));
+  }
+
+  final sub = yt.videos.streams
+      .get(stream)
+      .listen(
+        (chunk) {
+          sink.add(chunk);
+          got += chunk.length;
+          if (total > 0) onProgress(got / total);
+          arm();
+        },
+        onError: fail,
+        onDone: () => got < total ? fail(const YoutubeBlocked()) : done.complete(),
+        cancelOnError: true,
+      );
+  arm();
   try {
-    var got = 0;
-    final total = stream.size.totalBytes;
-    await for (final chunk in yt.videos.streams.get(stream)) {
-      sink.add(chunk);
-      got += chunk.length;
-      if (total > 0) onProgress(got / total);
-    }
-  } finally {
+    await done.future;
+  } catch (_) {
     await sink.close();
+    if (file.existsSync()) file.deleteSync();
+    rethrow;
+  } finally {
+    idle?.cancel();
+    unawaited(sub.cancel());
     yt.close();
   }
+  await sink.close();
   return file;
 }
 
