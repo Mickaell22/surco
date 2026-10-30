@@ -6,8 +6,12 @@ import 'settings_page.dart' show appVersion;
 
 /// Busca versión nueva. Con [quiet] (al abrir la app) solo avisa si la hay;
 /// a mano también informa "ya tienes la última" o "sin conexión".
-Future<void> checkForUpdate(BuildContext context, {bool quiet = false}) async {
-  final r = await latestRelease();
+Future<void> checkForUpdate(
+  BuildContext context, {
+  bool quiet = false,
+  Future<Release?> Function() fetch = latestRelease,
+}) async {
+  final r = await fetch();
   if (quiet) settings.markUpdateChecked();
   if (!context.mounted) return;
   final messenger = ScaffoldMessenger.of(context);
@@ -40,21 +44,20 @@ void showUpdate(BuildContext context, Release r) {
     builder: (dialog) => StatefulBuilder(
       builder: (dialog, setState) => AlertDialog(
         title: Text('Surco ${r.version}'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(r.notes.trim().isEmpty ? 'Versión nueva disponible.' : r.notes.trim()),
-              if (downloading) ...[
-                const SizedBox(height: 16),
-                ValueListenableBuilder(
-                  valueListenable: progress,
-                  builder: (_, p, _) => LinearProgressIndicator(value: p),
-                ),
-              ],
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Las notas se desplazan; la barra de descarga queda siempre a la vista.
+            Flexible(child: SingleChildScrollView(child: Text(plainNotes(r.notes)))),
+            if (downloading) ...[
+              const SizedBox(height: 16),
+              ValueListenableBuilder(
+                valueListenable: progress,
+                builder: (_, p, _) => LinearProgressIndicator(value: p),
+              ),
             ],
-          ),
+          ],
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(dialog), child: const Text('Después')),
@@ -81,4 +84,17 @@ void showUpdate(BuildContext context, Release r) {
       ),
     ),
   );
+}
+
+/// Las notas del release vienen en Markdown (las del CHANGELOG): se muestran
+/// como texto simple, sin "###" ni comillas invertidas.
+String plainNotes(String md) {
+  final text = md
+      .split('\n')
+      .map((l) => l.replaceFirst(RegExp(r'^#+\s*'), '').replaceFirst(RegExp(r'^[-*]\s+'), '• '))
+      .join('\n')
+      .replaceAll('`', '')
+      .replaceAll('**', '')
+      .trim();
+  return text.isEmpty ? 'Versión nueva disponible.' : text;
 }
