@@ -2,6 +2,11 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); las versiones siguen [SemVer](https://semver.org/lang/es/).
 
+## [1.3.1] - 2026-10-29
+
+### Corregido
+- El aviso de actualización muestra la barra de descarga siempre a la vista y las novedades como texto limpio, sin símbolos de Markdown.
+
 ## [1.3.0] - 2026-10-29
 
 ### Agregado
