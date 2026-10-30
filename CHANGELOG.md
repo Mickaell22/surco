@@ -2,6 +2,11 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); las versiones siguen [SemVer](https://semver.org/lang/es/).
 
+## [1.3.2] - 2026-10-29
+
+### Corregido
+- Descargar de YouTube ya no se queda en "Descargando… 0 %" para siempre: si YouTube bloquea el video (pide verificación anti-bots), Surco lo avisa a los 20 segundos.
+
 ## [1.3.1] - 2026-10-29
 
 ### Corregido
