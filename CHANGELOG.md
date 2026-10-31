@@ -2,6 +2,16 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); las versiones siguen [SemVer](https://semver.org/lang/es/).
 
+## [1.4.0] - 2026-10-31
+
+### Agregado
+- Manos libres: comandos de voz que empiezan con "Surco" ("Surco, siguiente", "Surco, pausa", "Surco, sube el volumen"...), tus listas con una palabra del nombre ("Surco, entrenar") y atajos propios. Un bip confirma cada comando y se apaga solo con la música en pausa. Reconoce sin internet con Vosk; el modelo de español se baja la primera vez y se puede borrar.
+- Guía de manos libres con todos los comandos, tus listas y tus atajos.
+- Servidor de descargas propio (opcional): si YouTube bloquea un video en el teléfono, Surco lo pide a tu servidor (carpeta `server/`, lista para Railway).
+
+### Corregido
+- "Pausar al desconectar audífonos" apagado ya no pausa igual.
+
 ## [1.3.3] - 2026-10-31
 
 ### Agregado

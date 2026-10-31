@@ -10,7 +10,7 @@ import 'equalizer_page.dart';
 import 'update_dialog.dart';
 import 'voice_guide_page.dart';
 
-const appVersion = '1.3.3';
+const appVersion = '1.4.0';
 const repoUrl = 'github.com/Mickaell22/surco';
 
 class SettingsPage extends StatelessWidget {
