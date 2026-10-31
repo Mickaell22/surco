@@ -2,6 +2,15 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); las versiones siguen [SemVer](https://semver.org/lang/es/).
 
+## [1.3.3] - 2026-10-31
+
+### Agregado
+- Borrar canciones del teléfono desde el menú de cada canción o con el nuevo ⋮ del reproductor (donde ahora también está Compartir). Las que copiaste por cable piden además la confirmación de Android.
+
+### Corregido
+- Aleatorio sortea también la primera canción: antes empezaba siempre por la primera en orden alfabético.
+- El menú de una canción ya no queda cortado por la barra de navegación, y no reabre el teclado al venir del buscador.
+
 ## [1.3.2] - 2026-10-29
 
 ### Corregido

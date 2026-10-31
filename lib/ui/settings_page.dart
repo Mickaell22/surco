@@ -8,7 +8,7 @@ import 'brand.dart';
 import 'equalizer_page.dart';
 import 'update_dialog.dart';
 
-const appVersion = '1.3.2';
+const appVersion = '1.3.3';
 const repoUrl = 'github.com/Mickaell22/surco';
 
 class SettingsPage extends StatelessWidget {
