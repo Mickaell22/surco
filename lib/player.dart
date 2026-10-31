@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter/foundation.dart';
@@ -129,9 +130,11 @@ class Player extends ChangeNotifier {
   Future<void> playList(List<Song> songs, int index, {bool shuffle = false}) async {
     queue = List.of(songs);
     await audio.setShuffleModeEnabled(shuffle);
+    // En aleatorio la primera también se sortea: antes arrancaba siempre en la
+    // posición 0 (la primera por título) y solo se mezclaba el resto.
     await audio.setAudioSources([
       for (final s in queue) AudioSource.file(s.path, tag: _media(s)),
-    ], initialIndex: shuffle ? null : index);
+    ], initialIndex: shuffle ? Random().nextInt(queue.length) : index);
     if (shuffle) await audio.shuffle();
     notifyListeners();
     audio.play();
