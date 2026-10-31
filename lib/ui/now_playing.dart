@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../library.dart';
 import '../main.dart';
+import '../native.dart';
 import '../player.dart';
 import '../theme.dart';
 import 'decor.dart';
 import 'equalizer_page.dart';
 import 'song_actions.dart';
+import 'voice_guide_page.dart';
 import 'widgets.dart';
 
 class NowPlaying extends StatefulWidget {
@@ -65,6 +68,17 @@ class _NowPlayingState extends State<NowPlaying> {
                 ),
                 centerTitle: true,
                 actions: [
+                  ListenableBuilder(
+                    listenable: voice,
+                    builder: (context, _) => IconButton(
+                      tooltip: voice.active ? 'Desactivar manos libres' : 'Manos libres: controla Surco con la voz',
+                      onPressed: () => toggleVoice(context),
+                      icon: Icon(
+                        voice.active ? Icons.mic_rounded : Icons.mic_none_rounded,
+                        color: voice.active ? l.accent : l.ink,
+                      ),
+                    ),
+                  ),
                   IconButton(
                     tooltip: 'Ecualizador',
                     onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const EqualizerPage())),
@@ -493,4 +507,96 @@ void _sleepSheet(BuildContext context) {
       ),
     ),
   );
+}
+
+/// Prende o apaga el modo manos libres (pide el micrófono la primera vez).
+Future<void> toggleVoice(BuildContext context) async {
+  final messenger = ScaffoldMessenger.of(context);
+  if (voice.active) {
+    await voice.stop();
+    messenger.showSnackBar(const SnackBar(persist: false, content: Text('Manos libres desactivado.')));
+    return;
+  }
+  if (!(await Permission.microphone.request()).isGranted) {
+    messenger.showSnackBar(
+      const SnackBar(persist: false, content: Text('Sin permiso de micrófono no puedo escucharte.')),
+    );
+    return;
+  }
+  if (!await voiceModelReady()) {
+    if (!context.mounted || !await _downloadModel(context)) return;
+  }
+  await voice.start();
+  messenger.showSnackBar(
+    SnackBar(
+      persist: false,
+      duration: const Duration(seconds: 6),
+      action: SnackBarAction(
+        label: 'Comandos',
+        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const VoiceGuidePage())),
+      ),
+      content: Text(
+        'Te escucho. Di «Surco, siguiente», «Surco, pausa», «Surco, pon …». '
+        'Se apaga solo tras ${settings.voiceIdleMinutes} min con la música en pausa.',
+      ),
+    ),
+  );
+}
+
+/// Pide permiso para bajar el modelo de voz (una sola vez) y lo baja con
+/// barra de progreso. Devuelve true si quedó listo.
+Future<bool> _downloadModel(BuildContext context) async {
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (d) => AlertDialog(
+      title: const Text('Voz en español'),
+      content: const Text(
+        'Para entenderte sin internet, Surco necesita bajar el modelo de voz en español '
+        '(40 MB, una sola vez). Mejor con Wi-Fi.',
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(d, false), child: const Text('Ahora no')),
+        FilledButton(onPressed: () => Navigator.pop(d, true), child: const Text('Descargar')),
+      ],
+    ),
+  );
+  if (ok != true || !context.mounted) return false;
+  final progress = ValueNotifier<double?>(null);
+  showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => PopScope(
+      canPop: false,
+      child: AlertDialog(
+        title: const Text('Bajando voz en español'),
+        content: ValueListenableBuilder(
+          valueListenable: progress,
+          builder: (_, p, _) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              LinearProgressIndicator(value: p),
+              const SizedBox(height: 12),
+              Text(p == null ? 'Conectando…' : '${(p * 100).round()} %'),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+  var done = false;
+  String? error;
+  try {
+    await downloadVoiceModel((p) => progress.value = p);
+    done = true;
+  } catch (e) {
+    error = '$e';
+  }
+  if (!context.mounted) return done;
+  Navigator.of(context, rootNavigator: true).pop();
+  if (!done) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(persist: false, content: Text('No se pudo bajar el modelo de voz: $error')));
+  }
+  return done;
 }

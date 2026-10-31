@@ -61,6 +61,12 @@ Future<void> listenNative({required void Function(String text) onShared}) async 
         _onBackupProgress?.call(call.arguments['done'] as int, call.arguments['total'] as int);
       case 'shared':
         onShared(call.arguments as String);
+      case 'voice':
+        _onVoice?.call((call.arguments as List).cast<String>());
+      case 'listenStopped':
+        _onListenStopped?.call();
+      case 'voiceModelProgress':
+        _onModelProgress?.call((call.arguments as num).toDouble());
     }
   });
   // Texto con el que se abrió la app desde "Compartir", si lo hubo.
@@ -91,3 +97,49 @@ Future<void> scanFile(String path) => _channel.invokeMethod('scanFile', {'path':
 
 /// Carpeta pública Music del teléfono (donde se guardan las descargas).
 Future<String> musicDir() async => (await _channel.invokeMethod<String>('musicDir'))!;
+
+/// Prende el servicio de manos libres: cada frase llega a [onText] (varias
+/// alternativas, la más probable primero). [onStopped] avisa si se apagó desde
+/// la notificación o por falta de permiso.
+/// [phrases] es el vocabulario cerrado que Vosk puede reconocer.
+Future<void> startListening({
+  required List<String> phrases,
+  required void Function(List<String> texts) onText,
+  required void Function() onStopped,
+}) async {
+  _onVoice = onText;
+  _onListenStopped = onStopped;
+  await _channel.invokeMethod('listenStart', {'phrases': phrases});
+}
+
+/// El modelo de voz en español (~40 MB) ya está descargado.
+Future<bool> voiceModelReady() async => (await _channel.invokeMethod<bool>('voiceModelReady')) ?? false;
+
+/// Borra el modelo de voz (libera ~40 MB); se vuelve a bajar si se usa.
+Future<void> deleteVoiceModel() => _channel.invokeMethod('deleteVoiceModel');
+
+/// Baja el modelo de voz una sola vez. [onProgress] va de 0 a 1.
+Future<void> downloadVoiceModel(void Function(double) onProgress) async {
+  _onModelProgress = onProgress;
+  try {
+    await _channel.invokeMethod('downloadVoiceModel');
+  } finally {
+    _onModelProgress = null;
+  }
+}
+
+void Function(double)? _onModelProgress;
+
+Future<void> stopListening() => _channel.invokeMethod('listenStop');
+
+/// Tono corto de aviso del modo manos libres.
+enum Tone { ok, listening, error }
+
+Future<void> playTone(Tone t) => _channel.invokeMethod('tone', {'kind': t.name});
+
+/// Sube o baja el volumen de música del teléfono, sin mostrar la barra.
+Future<void> changeVolume({required bool up, int steps = 1}) =>
+    _channel.invokeMethod('volume', {'up': up, 'steps': steps});
+
+void Function(List<String> texts)? _onVoice;
+void Function()? _onListenStopped;

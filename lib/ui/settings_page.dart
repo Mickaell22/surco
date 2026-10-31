@@ -4,9 +4,11 @@ import '../main.dart';
 import '../native.dart';
 import '../settings.dart';
 import '../theme.dart';
+import '../youtube.dart';
 import 'brand.dart';
 import 'equalizer_page.dart';
 import 'update_dialog.dart';
+import 'voice_guide_page.dart';
 
 const appVersion = '1.3.3';
 const repoUrl = 'github.com/Mickaell22/surco';
@@ -155,6 +157,23 @@ class SettingsPage extends StatelessWidget {
             ),
             const _Section('Reproducción'),
             ListTile(
+              leading: const Icon(Icons.mic_none_rounded),
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const VoiceGuidePage())),
+              title: const Text('Manos libres'),
+              subtitle: Text(
+                'Comandos, atajos y voz descargada. Se apaga solo tras '
+                '${settings.voiceIdleMinutes} min con la música en pausa.',
+              ),
+              trailing: DropdownButton<int>(
+                value: settings.voiceIdleMinutes,
+                underline: const SizedBox.shrink(),
+                items: [
+                  for (final m in const [1, 3, 5, 10, 20]) DropdownMenuItem(value: m, child: Text('$m min')),
+                ],
+                onChanged: (m) => settings.update((x) => x.voiceIdleMinutes = m!),
+              ),
+            ),
+            ListTile(
               leading: const Icon(Icons.graphic_eq_rounded),
               title: const Text('Ecualizador'),
               subtitle: Text(settings.eqEnabled ? settings.eqPreset.label : 'Apagado'),
@@ -211,6 +230,17 @@ class SettingsPage extends StatelessWidget {
               leading: Icon(Icons.refresh_rounded, color: l.inkSoft),
               title: Text('Volver a escanear ahora', style: TextStyle(color: l.ink)),
               onTap: library.scan,
+            ),
+            ListTile(
+              leading: Icon(Icons.dns_outlined, color: l.inkSoft),
+              title: Text('Servidor de descargas', style: TextStyle(color: l.ink)),
+              subtitle: Text(
+                settings.downloadServer == null
+                    ? 'Opcional: baja los videos que YouTube bloquea en el teléfono'
+                    : 'Configurado: se usa si YouTube bloquea un video',
+                style: TextStyle(color: l.inkSoft),
+              ),
+              onTap: () => _serverDialog(context),
             ),
             ListTile(
               leading: Icon(Icons.save_alt_rounded, color: l.inkSoft),
@@ -442,10 +472,7 @@ class _Swatch extends StatelessWidget {
 Future<void> _backup(BuildContext context) async {
   final tree = await pickFolder();
   if (tree == null || !context.mounted) return;
-  final files = [
-    for (final s in library.songs) s.path,
-    for (final p in library.playlists) ?p.path,
-  ];
+  final files = [for (final s in library.songs) s.path, for (final p in library.playlists) ?p.path];
   final progress = ValueNotifier((0, files.length));
   showDialog<void>(
     context: context,
@@ -456,11 +483,14 @@ Future<void> _backup(BuildContext context) async {
         title: const Text('Copiando música'),
         content: ValueListenableBuilder(
           valueListenable: progress,
-          builder: (_, p, _) => Column(mainAxisSize: MainAxisSize.min, children: [
-            LinearProgressIndicator(value: p.$2 == 0 ? null : p.$1 / p.$2),
-            const SizedBox(height: 12),
-            Text('${p.$1} de ${p.$2} archivos'),
-          ]),
+          builder: (_, p, _) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              LinearProgressIndicator(value: p.$2 == 0 ? null : p.$1 / p.$2),
+              const SizedBox(height: 12),
+              Text('${p.$1} de ${p.$2} archivos'),
+            ],
+          ),
         ),
       ),
     ),
@@ -475,4 +505,67 @@ Future<void> _backup(BuildContext context) async {
   if (!context.mounted) return;
   Navigator.of(context, rootNavigator: true).pop();
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), persist: false));
+}
+
+/// Dirección y clave del servidor de descargas propio, con botón para probarlo.
+Future<void> _serverDialog(BuildContext context) async {
+  final url = TextEditingController(text: settings.serverUrl);
+  final token = TextEditingController(text: settings.serverToken);
+  String? status;
+  var testing = false;
+  await showDialog<void>(
+    context: context,
+    builder: (d) => StatefulBuilder(
+      builder: (d, setState) => AlertDialog(
+        title: const Text('Servidor de descargas'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Tu propia API (carpeta server/ del repo de Surco). Surco la usa solo cuando YouTube '
+                'no le entrega el audio al teléfono.',
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: url,
+                keyboardType: TextInputType.url,
+                decoration: const InputDecoration(labelText: 'Dirección', hintText: 'https://…'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: token,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: 'Clave'),
+              ),
+              if (status != null) ...[const SizedBox(height: 12), Text(status!)],
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: testing
+                ? null
+                : () async {
+                    setState(() => (testing, status) = (true, 'Probando…'));
+                    final problem = await checkServer((url: url.text.trim(), token: token.text.trim()));
+                    setState(() => (testing, status) = (false, problem ?? 'Funciona.'));
+                  },
+            child: const Text('Probar'),
+          ),
+          TextButton(
+            onPressed: () {
+              settings.update((x) {
+                x.serverUrl = url.text.trim();
+                x.serverToken = token.text.trim();
+              });
+              Navigator.pop(d);
+            },
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    ),
+  );
 }

@@ -59,3 +59,10 @@ android {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // Manos libres: reconocimiento de voz sin internet y con vocabulario cerrado.
+    // El modelo de español (~40 MB) se descarga aparte, solo al activar el modo.
+    implementation("com.alphacephei:vosk-android:0.3.75")
+    implementation("net.java.dev.jna:jna:5.18.1@aar")
+}

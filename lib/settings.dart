@@ -180,6 +180,22 @@ class Settings extends ChangeNotifier {
   EqPreset eqPreset = EqPreset.normal;
   List<double> eqGains = [];
 
+  /// Servidor de descargas propio (opcional). La clave queda solo en este
+  /// teléfono, en la configuración de la app.
+  String? serverUrl;
+  String? serverToken;
+
+  ({String url, String token})? get downloadServer {
+    final u = serverUrl?.trim(), t = serverToken?.trim();
+    return u == null || u.isEmpty || t == null || t.isEmpty ? null : (url: u, token: t);
+  }
+
+  /// Atajos de voz propios: frase → "lista:Nombre" o "artista:Nombre".
+  Map<String, String> voiceShortcuts = {};
+
+  /// Manos libres: minutos con la música en pausa antes de apagarse solo.
+  int voiceIdleMinutes = 3;
+
   /// Avisar al abrir (una vez al día) si hay una versión nueva en GitHub.
   bool checkUpdates = true;
   String? lastUpdateCheck;
@@ -291,6 +307,10 @@ class Settings extends ChangeNotifier {
         eqGains = [for (final g in (j['eqGains'] as List?) ?? const []) (g as num).toDouble()];
         loudness = (j['loudness'] as num?)?.toDouble() ?? loudness;
         checkUpdates = j['checkUpdates'] ?? checkUpdates;
+        voiceIdleMinutes = j['voiceIdleMinutes'] ?? voiceIdleMinutes;
+        serverUrl = j['serverUrl'];
+        voiceShortcuts = Map<String, String>.from(j['voiceShortcuts'] ?? const {});
+        serverToken = j['serverToken'];
         lastUpdateCheck = j['lastUpdateCheck'];
       } catch (_) {
         /* archivo corrupto: quedan los valores por defecto */
@@ -349,6 +369,10 @@ class Settings extends ChangeNotifier {
       'eqGains': eqGains,
       'loudness': loudness,
       'checkUpdates': checkUpdates,
+      'voiceIdleMinutes': voiceIdleMinutes,
+      'serverUrl': serverUrl,
+      'voiceShortcuts': voiceShortcuts,
+      'serverToken': serverToken,
       'lastUpdateCheck': lastUpdateCheck,
     }),
   );

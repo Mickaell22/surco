@@ -63,8 +63,13 @@ class YoutubeBlocked implements Exception {
       'la canción, por ejemplo la de YouTube Music, o bájala desde la PC.';
 }
 
-/// Baja el audio a un archivo temporal. [onProgress] va de 0 a 1.
-Future<File> downloadAudio(AudioOnlyStreamInfo stream, void Function(double) onProgress) async {
+/// Baja el audio a un archivo temporal. [onProgress] va de 0 a 1. Sin datos
+/// durante [stall] se da por bloqueado ([YoutubeBlocked]).
+Future<File> downloadAudio(
+  AudioOnlyStreamInfo stream,
+  void Function(double) onProgress, {
+  Duration stall = const Duration(seconds: 20),
+}) async {
   final file = File('${(await getTemporaryDirectory()).path}/yt-${DateTime.now().millisecondsSinceEpoch}.m4a');
   final yt = YoutubeExplode();
   final sink = file.openWrite();
@@ -79,7 +84,7 @@ Future<File> downloadAudio(AudioOnlyStreamInfo stream, void Function(double) onP
   void fail(Object e) => done.isCompleted ? null : done.completeError(e);
   void arm() {
     idle?.cancel();
-    idle = Timer(const Duration(seconds: 20), () => fail(const YoutubeBlocked()));
+    idle = Timer(stall, () => fail(const YoutubeBlocked()));
   }
 
   final sub = yt.videos.streams
@@ -109,6 +114,68 @@ Future<File> downloadAudio(AudioOnlyStreamInfo stream, void Function(double) onP
   }
   await sink.close();
   return file;
+}
+
+/// Servidor de descargas propio (carpeta server/ del repo, p. ej. en Railway):
+/// baja con yt-dlp los videos que YouTube no le entrega al teléfono.
+typedef DownloadServer = ({String url, String token});
+
+/// Pide el audio al servidor propio. Devuelve el archivo temporal.
+Future<File> downloadViaServer(String videoUrl, DownloadServer server, void Function(double) onProgress) async {
+  final file = File('${(await getTemporaryDirectory()).path}/yt-${DateTime.now().millisecondsSinceEpoch}.m4a');
+  final client = HttpClient()..connectionTimeout = const Duration(seconds: 15);
+  try {
+    final uri = Uri.parse(
+      '${server.url.replaceAll(RegExp(r'/+$'), '')}/audio',
+    ).replace(queryParameters: {'url': videoUrl});
+    final req = await client.getUrl(uri);
+    req.headers.set(HttpHeaders.authorizationHeader, 'Bearer ${server.token}');
+    // yt-dlp baja todo en el servidor antes de responder: margen amplio.
+    final res = await req.close().timeout(const Duration(minutes: 3));
+    if (res.statusCode != 200) {
+      final body = await res.transform(utf8.decoder).join();
+      throw HttpException(res.statusCode == 401 ? 'la clave del servidor no es correcta' : body.trim());
+    }
+    final sink = file.openWrite();
+    var got = 0;
+    try {
+      await for (final chunk in res.timeout(const Duration(seconds: 30))) {
+        sink.add(chunk);
+        got += chunk.length;
+        if (res.contentLength > 0) onProgress(got / res.contentLength);
+      }
+    } finally {
+      await sink.close();
+    }
+    return file;
+  } catch (_) {
+    if (file.existsSync()) file.deleteSync();
+    rethrow;
+  } finally {
+    client.close();
+  }
+}
+
+/// Prueba la dirección y la clave del servidor sin bajar nada. Devuelve null
+/// si está bien, o el problema.
+Future<String?> checkServer(DownloadServer server) async {
+  final client = HttpClient()..connectionTimeout = const Duration(seconds: 10);
+  try {
+    final req = await client.getUrl(Uri.parse('${server.url.replaceAll(RegExp(r'/+$'), '')}/audio'));
+    req.headers.set(HttpHeaders.authorizationHeader, 'Bearer ${server.token}');
+    final res = await req.close().timeout(const Duration(seconds: 15));
+    await res.drain<void>();
+    // Sin ?url= un servidor sano con la clave correcta responde 400.
+    return switch (res.statusCode) {
+      400 => null,
+      401 => 'La clave no es correcta.',
+      _ => 'Respondió ${res.statusCode}: ¿es la dirección correcta?',
+    };
+  } catch (e) {
+    return 'No se pudo conectar: $e';
+  } finally {
+    client.close();
+  }
 }
 
 Future<Uint8List?> _get(Uri url) async {

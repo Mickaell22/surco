@@ -6,6 +6,8 @@ import android.graphics.BitmapFactory
 import android.media.MediaCodec
 import android.media.MediaExtractor
 import android.media.MediaMuxer
+import android.media.AudioManager
+import android.media.ToneGenerator
 import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
@@ -105,6 +107,57 @@ class MainActivity : AudioServiceActivity() {
                 }
                 "scanFile" -> {
                     MediaScannerConnection.scanFile(this, arrayOf(call.argument<String>("path")!!), null, null)
+                    result.success(null)
+                }
+                "listenStart" -> {
+                    ListenService.onText = { texts -> main.post { channel.invokeMethod("voice", texts) } }
+                    ListenService.onStopped = { main.post { channel.invokeMethod("listenStopped", null) } }
+                    val grammar = ListenService.grammar(call.argument<List<String>>("phrases")!!)
+                    androidx.core.content.ContextCompat.startForegroundService(
+                        this, Intent(this, ListenService::class.java).putExtra(ListenService.EXTRA_GRAMMAR, grammar)
+                    )
+                    result.success(null)
+                }
+                "voiceModelReady" -> result.success(ListenService.modelReady(this))
+                "deleteVoiceModel" -> {
+                    stopService(Intent(this, ListenService::class.java))
+                    result.success(ListenService.modelDir(this).deleteRecursively())
+                }
+                "downloadVoiceModel" -> Thread {
+                    try {
+                        var last = -1
+                        ListenService.downloadModel(this) { p ->
+                            val pct = (p * 100).toInt()
+                            if (pct != last) {
+                                last = pct
+                                main.post { channel.invokeMethod("voiceModelProgress", p) }
+                            }
+                        }
+                        main.post { result.success(true) }
+                    } catch (e: Exception) {
+                        main.post { result.error("modelo", e.message, null) }
+                    }
+                }.start()
+                "listenStop" -> {
+                    stopService(Intent(this, ListenService::class.java))
+                    result.success(null)
+                }
+                "tone" -> {
+                    // Tonos del sistema por el canal de música: salen por los auriculares.
+                    val (tone, ms) = when (call.argument<String>("kind")) {
+                        "listening" -> ToneGenerator.TONE_PROP_BEEP2 to 220
+                        "error" -> ToneGenerator.TONE_PROP_NACK to 300
+                        else -> ToneGenerator.TONE_PROP_ACK to 200
+                    }
+                    val gen = ToneGenerator(AudioManager.STREAM_MUSIC, 80)
+                    gen.startTone(tone, ms)
+                    main.postDelayed({ gen.release() }, ms + 200L)
+                    result.success(null)
+                }
+                "volume" -> {
+                    val audio = getSystemService(AudioManager::class.java)
+                    val dir = if (call.argument<Boolean>("up") == true) AudioManager.ADJUST_RAISE else AudioManager.ADJUST_LOWER
+                    repeat(call.argument<Int>("steps") ?: 1) { audio.adjustStreamVolume(AudioManager.STREAM_MUSIC, dir, 0) }
                     result.success(null)
                 }
                 "delete" -> deleteAudio(File(call.argument<String>("path")!!), result)

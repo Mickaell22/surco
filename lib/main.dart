@@ -9,6 +9,7 @@ import 'settings.dart';
 import 'stats.dart';
 import 'theme.dart';
 import 'ui/home.dart';
+import 'voice.dart';
 
 // ponytail: singletons globales en vez de un gestor de estado. La app tiene una
 // sola biblioteca y un solo reproductor; si crece, pasar a InheritedNotifier.
@@ -16,6 +17,7 @@ final settings = Settings();
 final stats = Stats();
 final library = Library(settings);
 final player = Player(stats, settings);
+final voice = Voice(player, library, settings);
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

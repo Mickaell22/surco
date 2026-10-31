@@ -38,6 +38,7 @@ class _DownloadPageState extends State<DownloadPage> {
   String? _lyrics;
   bool _lyricsLoading = false, _useCover = true, _useLyrics = true;
   String? _savedPath;
+  bool _viaServer = false;
 
   Duration get _length => _info?.video.duration ?? Duration.zero;
 
@@ -94,7 +95,26 @@ class _DownloadPageState extends State<DownloadPage> {
       _progress = 0;
     });
     try {
-      _file = await downloadAudio(_stream!, (p) => setState(() => _progress = p));
+      final server = settings.downloadServer;
+      try {
+        // Con servidor propio se rinde antes: si YouTube bloquea, mejor no esperar.
+        _file = await downloadAudio(
+          _stream!,
+          (p) => setState(() => _progress = p),
+          stall: server == null ? const Duration(seconds: 20) : const Duration(seconds: 8),
+        );
+      } on YoutubeBlocked {
+        if (server == null) rethrow;
+        setState(() {
+          _viaServer = true;
+          _progress = 0;
+        });
+        _file = await downloadViaServer(
+          'https://youtu.be/${_info!.video.id}',
+          server,
+          (p) => setState(() => _progress = p),
+        );
+      }
       setState(() {
         _range = RangeValues(0, _length.inSeconds.toDouble().clamp(1, double.infinity));
         _step = _Step.edit;
@@ -171,7 +191,11 @@ class _DownloadPageState extends State<DownloadPage> {
           ...switch (_step) {
             _Step.link || _Step.loading => _linkStep(l),
             _Step.choose => _chooseStep(l),
-            _Step.downloading => _busy(l, 'Descargando…', _progress),
+            _Step.downloading => _busy(
+              l,
+              _viaServer ? 'YouTube lo bloqueó en el teléfono; bajando por tu servidor…' : 'Descargando…',
+              _viaServer && _progress == 0 ? null : _progress,
+            ),
             _Step.edit => _editStep(l),
             _Step.saving => _busy(l, 'Recortando y guardando…', null),
             _Step.done => _doneStep(l),
