@@ -28,8 +28,11 @@ Future<VideoInfo> fetchInfo(String url) async {
   try {
     final video = await yt.videos.get(url);
     final manifest = await yt.videos.streams.getManifest(video.id);
-    final streams = manifest.audioOnly.where((s) => s.container == StreamContainer.mp4).toList()
-      ..sort((a, b) => b.bitrate.compareTo(a.bitrate));
+    final streams =
+        manifest.audioOnly
+            .where((s) => s.container == StreamContainer.mp4)
+            .toList()
+          ..sort((a, b) => b.bitrate.compareTo(a.bitrate));
     return (video: video, streams: streams);
   } finally {
     yt.close();
@@ -44,7 +47,12 @@ Future<VideoInfo> fetchInfo(String url) async {
     caseSensitive: false,
   );
   var title = videoTitle.replaceAll(noise, '').trim();
-  var artist = author.replaceAll(RegExp(r'\s*-\s*Topic$|VEVO$|\s*Official$', caseSensitive: false), '').trim();
+  var artist = author
+      .replaceAll(
+        RegExp(r'\s*-\s*Topic$|VEVO$|\s*Official$', caseSensitive: false),
+        '',
+      )
+      .trim();
   final dash = RegExp(r'\s+[-–—]\s+').firstMatch(title);
   if (dash != null) {
     artist = title.substring(0, dash.start).trim();
@@ -70,7 +78,9 @@ Future<File> downloadAudio(
   void Function(double) onProgress, {
   Duration stall = const Duration(seconds: 20),
 }) async {
-  final file = File('${(await getTemporaryDirectory()).path}/yt-${DateTime.now().millisecondsSinceEpoch}.m4a');
+  final file = File(
+    '${(await getTemporaryDirectory()).path}/yt-${DateTime.now().millisecondsSinceEpoch}.m4a',
+  );
   final yt = YoutubeExplode();
   final sink = file.openWrite();
   var got = 0;
@@ -97,7 +107,8 @@ Future<File> downloadAudio(
           arm();
         },
         onError: fail,
-        onDone: () => got < total ? fail(const YoutubeBlocked()) : done.complete(),
+        onDone: () =>
+            got < total ? fail(const YoutubeBlocked()) : done.complete(),
         cancelOnError: true,
       );
   arm();
@@ -121,8 +132,14 @@ Future<File> downloadAudio(
 typedef DownloadServer = ({String url, String token});
 
 /// Pide el audio al servidor propio. Devuelve el archivo temporal.
-Future<File> downloadViaServer(String videoUrl, DownloadServer server, void Function(double) onProgress) async {
-  final file = File('${(await getTemporaryDirectory()).path}/yt-${DateTime.now().millisecondsSinceEpoch}.m4a');
+Future<File> downloadViaServer(
+  String videoUrl,
+  DownloadServer server,
+  void Function(double) onProgress,
+) async {
+  final file = File(
+    '${(await getTemporaryDirectory()).path}/yt-${DateTime.now().millisecondsSinceEpoch}.m4a',
+  );
   final client = HttpClient()..connectionTimeout = const Duration(seconds: 15);
   try {
     final uri = Uri.parse(
@@ -134,7 +151,11 @@ Future<File> downloadViaServer(String videoUrl, DownloadServer server, void Func
     final res = await req.close().timeout(const Duration(minutes: 3));
     if (res.statusCode != 200) {
       final body = await res.transform(utf8.decoder).join();
-      throw HttpException(res.statusCode == 401 ? 'la clave del servidor no es correcta' : body.trim());
+      throw HttpException(
+        res.statusCode == 401
+            ? 'la clave del servidor no es correcta'
+            : body.trim(),
+      );
     }
     final sink = file.openWrite();
     var got = 0;
@@ -161,7 +182,9 @@ Future<File> downloadViaServer(String videoUrl, DownloadServer server, void Func
 Future<String?> checkServer(DownloadServer server) async {
   final client = HttpClient()..connectionTimeout = const Duration(seconds: 10);
   try {
-    final req = await client.getUrl(Uri.parse('${server.url.replaceAll(RegExp(r'/+$'), '')}/audio'));
+    final req = await client.getUrl(
+      Uri.parse('${server.url.replaceAll(RegExp(r'/+$'), '')}/audio'),
+    );
     req.headers.set(HttpHeaders.authorizationHeader, 'Bearer ${server.token}');
     final res = await req.close().timeout(const Duration(seconds: 15));
     await res.drain<void>();
@@ -181,7 +204,9 @@ Future<String?> checkServer(DownloadServer server) async {
 Future<Uint8List?> _get(Uri url) async {
   final client = HttpClient()..connectionTimeout = const Duration(seconds: 8);
   try {
-    final res = await (await client.getUrl(url)).close().timeout(const Duration(seconds: 15));
+    final res = await (await client.getUrl(
+      url,
+    )).close().timeout(const Duration(seconds: 15));
     if (res.statusCode != 200) return null;
     final b = BytesBuilder(copy: false);
     await for (final c in res) {
@@ -207,27 +232,49 @@ Future<Uint8List?> fetchCover(Video v) async {
 /// Letra de lrclib.net (sincronizada si la hay), la misma fuente que la música
 /// bajada en la PC. lrclib es abierta y tiene entradas basura ("probe"): se
 /// descartan las cortas y se prefiere la de duración parecida con más texto.
-Future<String?> fetchLyrics(String title, String artist, Duration duration) async {
-  final q = {'track_name': title, 'artist_name': artist, 'duration': '${duration.inSeconds}'};
+Future<String?> fetchLyrics(
+  String title,
+  String artist,
+  Duration duration,
+) async {
+  final q = {
+    'track_name': title,
+    'artist_name': artist,
+    'duration': '${duration.inSeconds}',
+  };
   final exact = await _get(Uri.https('lrclib.net', '/api/get', q));
   if (exact != null) {
     final l = bestLyrics([jsonDecode(utf8.decode(exact))], duration);
     if (l != null) return l;
   }
-  final found = await _get(Uri.https('lrclib.net', '/api/search', {'track_name': title, 'artist_name': artist}));
-  return found == null ? null : bestLyrics(jsonDecode(utf8.decode(found)) as List, duration);
+  final found = await _get(
+    Uri.https('lrclib.net', '/api/search', {
+      'track_name': title,
+      'artist_name': artist,
+    }),
+  );
+  return found == null
+      ? null
+      : bestLyrics(jsonDecode(utf8.decode(found)) as List, duration);
 }
 
 /// Elige entre resultados de lrclib: duración a ±5 s, con texto de verdad
 /// (sin marcas de tiempo, al menos 80 caracteres); sincronizada antes que plana.
 String? bestLyrics(List<dynamic> results, Duration duration) {
-  int textLength(String l) => l.replaceAll(RegExp(r'\[\d+:\d+(\.\d+)?\]'), '').trim().length;
+  int textLength(String l) =>
+      l.replaceAll(RegExp(r'\[\d+:\d+(\.\d+)?\]'), '').trim().length;
   String? best;
   var bestScore = 0;
   for (final r in results.cast<Map<String, dynamic>>()) {
     final d = (r['duration'] as num?)?.toDouble();
-    if (d != null && duration > Duration.zero && (d - duration.inSeconds).abs() > 5) continue;
-    for (final (key, bonus) in [('syncedLyrics', 1 << 20), ('plainLyrics', 0)]) {
+    if (d != null &&
+        duration > Duration.zero &&
+        (d - duration.inSeconds).abs() > 5)
+      continue;
+    for (final (key, bonus) in [
+      ('syncedLyrics', 1 << 20),
+      ('plainLyrics', 0),
+    ]) {
       final l = (r[key] as String?)?.trim();
       if (l == null || textLength(l) < 80) continue;
       final score = bonus + textLength(l);
@@ -239,7 +286,8 @@ String? bestLyrics(List<dynamic> results, Duration duration) {
 
 /// Año de publicación del disco, solo si YouTube Music lo dice en la
 /// descripción ("Released on: 1987-07-27"). El año de subida del video no sirve.
-String? releaseYear(String description) => RegExp(r'Released on:\s*(\d{4})').firstMatch(description)?.group(1);
+String? releaseYear(String description) =>
+    RegExp(r'Released on:\s*(\d{4})').firstMatch(description)?.group(1);
 
 /// Recorta, etiqueta y guarda en Music/Surco. Devuelve la ruta final.
 Future<String> saveDownload({
@@ -248,8 +296,11 @@ Future<String> saveDownload({
   required Duration? end,
   required Mp4Tags tags,
 }) async {
-  final dir = Directory('${await musicDir()}/Surco')..createSync(recursive: true);
-  final name = '${tags.artist} - ${tags.title}'.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_').trim();
+  final dir = Directory('${await musicDir()}/Surco')
+    ..createSync(recursive: true);
+  final name = '${tags.artist} - ${tags.title}'
+      .replaceAll(RegExp(r'[\\/:*?"<>|]'), '_')
+      .trim();
   var out = File('${dir.path}/$name.m4a');
   for (var i = 2; out.existsSync(); i++) {
     out = File('${dir.path}/$name ($i).m4a');
@@ -259,7 +310,10 @@ Future<String> saveDownload({
     // Siempre por el recorte nativo: además deja un MP4 común (YouTube manda
     // uno fragmentado, donde no se pueden escribir etiquetas).
     await trimAudio(source.path, trimmed.path, start, end);
-    await out.writeAsBytes(writeMp4Tags(await trimmed.readAsBytes(), tags), flush: true);
+    await out.writeAsBytes(
+      writeMp4Tags(await trimmed.readAsBytes(), tags),
+      flush: true,
+    );
   } finally {
     if (trimmed.existsSync()) trimmed.deleteSync();
   }

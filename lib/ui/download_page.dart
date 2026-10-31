@@ -63,14 +63,16 @@ class _DownloadPageState extends State<DownloadPage> {
 
   Future<void> _load() async {
     final url = findYoutubeUrl(_url.text);
-    if (url == null) return setState(() => _error = 'Eso no parece un link de YouTube.');
+    if (url == null)
+      return setState(() => _error = 'Eso no parece un link de YouTube.');
     setState(() {
       _step = _Step.loading;
       _error = null;
     });
     try {
       final info = await fetchInfo(url);
-      if (info.streams.isEmpty) throw 'YouTube no ofrece audio para este video.';
+      if (info.streams.isEmpty)
+        throw 'YouTube no ofrece audio para este video.';
       final tags = guessTags(info.video.title, info.video.author);
       _title.text = tags.title;
       _artist.text = tags.artist;
@@ -80,7 +82,9 @@ class _DownloadPageState extends State<DownloadPage> {
         _stream = info.streams.first;
         _step = _Step.choose;
       });
-      fetchCover(info.video).then((c) => mounted ? setState(() => _cover = c) : null);
+      fetchCover(
+        info.video,
+      ).then((c) => mounted ? setState(() => _cover = c) : null);
     } catch (e) {
       setState(() {
         _step = _Step.link;
@@ -101,7 +105,9 @@ class _DownloadPageState extends State<DownloadPage> {
         _file = await downloadAudio(
           _stream!,
           (p) => setState(() => _progress = p),
-          stall: server == null ? const Duration(seconds: 20) : const Duration(seconds: 8),
+          stall: server == null
+              ? const Duration(seconds: 20)
+              : const Duration(seconds: 8),
         );
       } on YoutubeBlocked {
         if (server == null) rethrow;
@@ -116,7 +122,10 @@ class _DownloadPageState extends State<DownloadPage> {
         );
       }
       setState(() {
-        _range = RangeValues(0, _length.inSeconds.toDouble().clamp(1, double.infinity));
+        _range = RangeValues(
+          0,
+          _length.inSeconds.toDouble().clamp(1, double.infinity),
+        );
         _step = _Step.edit;
       });
       _findLyrics();
@@ -142,7 +151,8 @@ class _DownloadPageState extends State<DownloadPage> {
 
   void _listen({required bool end}) {
     final a = _range.start, b = _range.end;
-    final from = end ? (b - 8).clamp(a, b) : a, to = end ? b : (a + 8).clamp(a, b);
+    final from = end ? (b - 8).clamp(a, b) : a,
+        to = end ? b : (a + 8).clamp(a, b);
     player.preview(_file!.path, _sec(from), _sec(to));
   }
 
@@ -177,7 +187,12 @@ class _DownloadPageState extends State<DownloadPage> {
   @override
   Widget build(BuildContext context) {
     final l = Ledger.of(context);
-    final pad = EdgeInsets.fromLTRB(20, 8, 20, 24 + MediaQuery.paddingOf(context).bottom);
+    final pad = EdgeInsets.fromLTRB(
+      20,
+      8,
+      20,
+      24 + MediaQuery.paddingOf(context).bottom,
+    );
     return Scaffold(
       appBar: AppBar(title: const Text('Descargar de YouTube')),
       body: ListView(
@@ -186,14 +201,19 @@ class _DownloadPageState extends State<DownloadPage> {
           if (_error case final e?)
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: Text(e, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+              child: Text(
+                e,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
             ),
           ...switch (_step) {
             _Step.link || _Step.loading => _linkStep(l),
             _Step.choose => _chooseStep(l),
             _Step.downloading => _busy(
               l,
-              _viaServer ? 'YouTube lo bloqueó en el teléfono; bajando por tu servidor…' : 'Descargando…',
+              _viaServer
+                  ? 'YouTube lo bloqueó en el teléfono; bajando por tu servidor…'
+                  : 'Descargando…',
               _viaServer && _progress == 0 ? null : _progress,
             ),
             _Step.edit => _editStep(l),
@@ -236,7 +256,10 @@ class _DownloadPageState extends State<DownloadPage> {
     FilledButton.icon(
       onPressed: _step == _Step.loading ? null : _load,
       icon: _step == _Step.loading
-          ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
+          ? const SizedBox.square(
+              dimension: 18,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
           : const Icon(Icons.search_rounded),
       label: const Text('Buscar'),
     ),
@@ -250,7 +273,9 @@ class _DownloadPageState extends State<DownloadPage> {
           borderRadius: BorderRadius.circular(10),
           child: SizedBox.square(
             dimension: 72,
-            child: _cover == null ? ColoredBox(color: l.line) : Image.memory(_cover!, fit: BoxFit.cover),
+            child: _cover == null
+                ? ColoredBox(color: l.line)
+                : Image.memory(_cover!, fit: BoxFit.cover),
           ),
         ),
         const SizedBox(width: 14),
@@ -262,9 +287,16 @@ class _DownloadPageState extends State<DownloadPage> {
                 v.title,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: l.ink),
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: l.ink,
+                ),
               ),
-              Text('${v.author} · ${fmtDur(v.duration)}', style: TextStyle(fontSize: 13, color: l.inkSoft)),
+              Text(
+                '${v.author} · ${fmtDur(v.duration)}',
+                style: TextStyle(fontSize: 13, color: l.inkSoft),
+              ),
             ],
           ),
         ),
@@ -288,14 +320,22 @@ class _DownloadPageState extends State<DownloadPage> {
             RadioListTile<AudioOnlyStreamInfo>(
               value: s,
               contentPadding: EdgeInsets.zero,
-              title: Text('${s.bitrate.kiloBitsPerSecond.round()} kbps${i == 0 ? ' · recomendada' : ''}'),
-              subtitle: Text('AAC (.m4a) · ${s.size.totalMegaBytes.toStringAsFixed(1)} MB'),
+              title: Text(
+                '${s.bitrate.kiloBitsPerSecond.round()} kbps${i == 0 ? ' · recomendada' : ''}',
+              ),
+              subtitle: Text(
+                'AAC (.m4a) · ${s.size.totalMegaBytes.toStringAsFixed(1)} MB',
+              ),
             ),
         ],
       ),
     ),
     const SizedBox(height: 12),
-    FilledButton.icon(onPressed: _download, icon: const Icon(Icons.download_rounded), label: const Text('Descargar')),
+    FilledButton.icon(
+      onPressed: _download,
+      icon: const Icon(Icons.download_rounded),
+      label: const Text('Descargar'),
+    ),
   ];
 
   List<Widget> _busy(Ledger l, String label, double? value) => [
@@ -303,11 +343,17 @@ class _DownloadPageState extends State<DownloadPage> {
     const SizedBox(height: 32),
     LinearProgressIndicator(value: value),
     const SizedBox(height: 12),
-    Text(value == null ? label : '$label ${(value * 100).round()} %', style: TextStyle(color: l.inkSoft)),
+    Text(
+      value == null ? label : '$label ${(value * 100).round()} %',
+      style: TextStyle(color: l.inkSoft),
+    ),
   ];
 
   List<Widget> _editStep(Ledger l) {
-    final max = _length.inSeconds.toDouble().clamp(1, double.infinity).toDouble();
+    final max = _length.inSeconds
+        .toDouble()
+        .clamp(1, double.infinity)
+        .toDouble();
     final kept = _sec(_range.end - _range.start);
     return [
       _header(l),
@@ -316,12 +362,18 @@ class _DownloadPageState extends State<DownloadPage> {
         'Recortar',
         style: TextStyle(fontWeight: FontWeight.w600, color: l.ink),
       ),
-      Text('Mueve los extremos para quitar intros o despedidas.', style: TextStyle(fontSize: 13, color: l.inkSoft)),
+      Text(
+        'Mueve los extremos para quitar intros o despedidas.',
+        style: TextStyle(fontSize: 13, color: l.inkSoft),
+      ),
       RangeSlider(
         values: _range,
         max: max,
         divisions: max.round(),
-        labels: RangeLabels(fmtDur(_sec(_range.start)), fmtDur(_sec(_range.end))),
+        labels: RangeLabels(
+          fmtDur(_sec(_range.start)),
+          fmtDur(_sec(_range.end)),
+        ),
         onChanged: (r) => setState(() => _range = r),
       ),
       Row(
@@ -383,17 +435,24 @@ class _DownloadPageState extends State<DownloadPage> {
         value: _useCover && _cover != null,
         onChanged: _cover == null ? null : (v) => setState(() => _useCover = v),
         title: const Text('Portada'),
-        subtitle: Text(_cover == null ? 'No se pudo bajar la miniatura' : 'Miniatura del video, recortada cuadrada'),
+        subtitle: Text(
+          _cover == null
+              ? 'No se pudo bajar la miniatura'
+              : 'Miniatura del video, recortada cuadrada',
+        ),
       ),
       SwitchListTile(
         contentPadding: EdgeInsets.zero,
         value: _useLyrics && _lyrics != null,
-        onChanged: _lyrics == null ? null : (v) => setState(() => _useLyrics = v),
+        onChanged: _lyrics == null
+            ? null
+            : (v) => setState(() => _useLyrics = v),
         title: const Text('Letra'),
         subtitle: Text(switch ((_lyricsLoading, _lyrics)) {
           (true, _) => 'Buscando en lrclib…',
           (_, null) => 'No se encontró',
-          (_, final t?) => t.startsWith('[') ? 'Encontrada, sincronizada' : 'Encontrada',
+          (_, final t?) =>
+            t.startsWith('[') ? 'Encontrada, sincronizada' : 'Encontrada',
         }),
         secondary: IconButton(
           tooltip: 'Buscar de nuevo con el título y artista de arriba',
@@ -403,7 +462,9 @@ class _DownloadPageState extends State<DownloadPage> {
       ),
       const SizedBox(height: 12),
       FilledButton.icon(
-        onPressed: _title.text.trim().isEmpty || _artist.text.trim().isEmpty ? null : _save,
+        onPressed: _title.text.trim().isEmpty || _artist.text.trim().isEmpty
+            ? null
+            : _save,
         icon: const Icon(Icons.save_rounded),
         label: const Text('Guardar en Música'),
       ),
