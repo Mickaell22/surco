@@ -63,6 +63,7 @@ Los enlaces bajan siempre la versión más reciente; las anteriores y sus cambio
 - **Saltar silencios** largos al inicio y final de las pistas.
 - **Ecualizador** del teléfono con preajustes (Graves, Voz, Agudos, Rock, Pop), ajuste por banda y volumen extra.
 - **Compartir** la pista por WhatsApp, Telegram, Bluetooth o cualquier app.
+- **Borrar** canciones del teléfono desde su menú o el reproductor.
 - **Copia de seguridad** de canciones y listas a la carpeta que elijas (SD, USB, Drive). Repetirla en la misma carpeta solo copia lo nuevo.
 - **Actualizaciones**: una vez al día revisa si hay versión nueva aquí en GitHub, la baja y abre el instalador. Se puede apagar.
 
