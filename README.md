@@ -22,12 +22,13 @@
 [![Letras](https://img.shields.io/badge/letras_sincronizadas-1A1714?style=for-the-badge)](#funciones)
 [![Estadísticas](https://img.shields.io/badge/estadísticas_locales-1A1714?style=for-the-badge)](#estadísticas-y-listas-automáticas)
 [![YouTube](https://img.shields.io/badge/descargas_de_YouTube-1A1714?style=for-the-badge)](#descargar-de-youtube)
+[![Manos libres](https://img.shields.io/badge/manos_libres-1A1714?style=for-the-badge)](#manos-libres)
 [![Temas](https://img.shields.io/badge/temas_y_temporadas-1A1714?style=for-the-badge)](#temas)
 [![Ligera](https://img.shields.io/badge/ligera-1A1714?style=for-the-badge)](#por-qué-es-ligera)
 
 <br/>
 
-[Descargar](#descargar) • [Funciones](#funciones) • [YouTube](#descargar-de-youtube) • [Temas](#temas) • [Poner tu música](#poner-tu-música) • [Privacidad](#privacidad) • [Desarrollo](#desarrollo)
+[Descargar](#descargar) • [Funciones](#funciones) • [YouTube](#descargar-de-youtube) • [Manos libres](#manos-libres) • [Temas](#temas) • [Poner tu música](#poner-tu-música) • [Privacidad](#privacidad) • [Desarrollo](#desarrollo)
 
 <br/>
 
@@ -76,7 +77,20 @@ Pega el link en ⋮ → *Descargar de YouTube*, o desde la app de YouTube toca *
 3. Revisa título, artista y álbum (salen limpios del nombre del video), la portada (miniatura recortada cuadrada) y la letra de [lrclib](https://lrclib.net), sincronizada si existe.
 4. Se guarda en `Music/Surco` con todo dentro del archivo.
 
+**Videos que YouTube bloquea en el teléfono:** algunos exigen una verificación anti-bots y no bajan desde la app. Si tienes tu propio servidor (la carpeta [`server/`](./server), con yt-dlp, lista para Railway), configúralo en *Configuración → Servidor de descargas* y Surco lo usa solo para esos casos.
+
 > YouTube no permite descargar en sus términos de servicio: úsalo para tu música y bajo tu responsabilidad. YouTube cambia su sistema seguido, así que la descarga puede dejar de funcionar hasta la siguiente versión de Surco.
+
+## Manos libres
+
+Para cuando no puedes tocar el teléfono (en moto, con casco). En el reproductor toca el micrófono y habla:
+
+- *"Surco, siguiente"*, *"anterior"*, *"pausa"*, *"sigue"*, *"sube el volumen"*, *"baja el volumen"*, *"aleatorio"*, *"repite"*.
+- Tus listas con una palabra del nombre: *"Surco, entrenar"*, *"Surco, rock"*. O *"Surco, pon"* + lista o artista.
+- Atajos propios: una frase tuya que pone una lista o un artista.
+- Un bip confirma cada comando. Se apaga solo si la música lleva unos minutos en pausa (al guardar los audífonos).
+
+Entiende sin internet con [Vosk](https://alphacephei.com/vosk/): el modelo de español (~40 MB) se baja la primera vez y se puede borrar desde la guía (*Configuración → Manos libres*). Escucha con un vocabulario cerrado, así una conversación normal no maneja la música.
 
 ## Estadísticas y listas automáticas
 
@@ -125,7 +139,8 @@ Surco no tiene cuentas, anuncios ni analítica. La biblioteca, las estadísticas
 
 Solo usa internet para:
 
-- **Descargar de YouTube**, cuando lo usas: YouTube, la miniatura del video y la letra en lrclib.net.
+- **Descargar de YouTube**, cuando lo usas: YouTube, la miniatura del video y la letra en lrclib.net, y tu servidor de descargas si lo configuraste.
+- **Manos libres**: solo para bajar una vez el modelo de voz. Lo que dices se procesa en el teléfono y no se envía a ningún lado.
 - **Buscar actualizaciones**: una consulta al día a la API pública de GitHub (se apaga en Configuración → Acerca de).
 
 Nunca envía tu biblioteca, tus escuchas ni nada del teléfono.
@@ -133,6 +148,7 @@ Nunca envía tu biblioteca, tus escuchas ni nada del teléfono.
 ## Por qué es ligera
 
 - Pocas dependencias: `just_audio` (+ `just_audio_background`), `audio_session`, `audio_metadata_reader` (Dart puro), `permission_handler`, `path_provider` y `youtube_explode_dart` (Dart puro).
+- Manos libres usa Vosk (su motor ocupa ~10 MB de la app); el modelo de voz no viene en el APK, se baja solo si lo usas.
 - Ecualizador, recorte de audio, compartir y copia de seguridad usan lo que trae Android (efectos de audio, `MediaMuxer`, `FileProvider`, selector de carpetas): sin ffmpeg ni paquetes extra.
 - Tipografía del sistema; no descarga fuentes.
 - Las portadas se extraen una vez a caché en disco y se decodifican al tamaño de la miniatura.
