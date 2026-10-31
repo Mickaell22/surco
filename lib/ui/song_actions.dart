@@ -8,6 +8,8 @@ import 'home.dart';
 import 'widgets.dart';
 
 void showSongActions(BuildContext context, Song s) {
+  // Si venía del buscador, que el teclado no vuelva a abrirse al cerrar el menú.
+  FocusManager.instance.primaryFocus?.unfocus();
   final l = Ledger.of(context);
   void go(VoidCallback f) {
     Navigator.pop(context);
@@ -16,6 +18,9 @@ void showSongActions(BuildContext context, Song s) {
 
   showModalBottomSheet<void>(
     context: context,
+    // Con siete acciones el menú pasa la altura por defecto (9/16 de pantalla)
+    // y la última quedaba tapada por la barra de navegación.
+    isScrollControlled: true,
     builder: (sheet) => SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,
