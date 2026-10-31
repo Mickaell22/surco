@@ -7,6 +7,7 @@ Variables de entorno:
   SURCO_API_TOKEN  clave obligatoria; la app la manda como "Authorization: Bearer <clave>"
   PORT             puerto (Railway lo define solo; por defecto 8080)
   MAX_MINUTES      duración máxima aceptada (por defecto 20)
+  MAX_PER_HOUR     peticiones a /info y /audio por hora (por defecto 60)
 """
 
 import hmac
@@ -16,6 +17,8 @@ import re
 import shutil
 import tempfile
 import threading
+import time
+from collections import deque
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
@@ -24,6 +27,25 @@ import yt_dlp
 TOKEN = os.environ.get("SURCO_API_TOKEN", "")
 MAX_SECONDS = int(os.environ.get("MAX_MINUTES", "20")) * 60
 YOUTUBE = re.compile(r"^https?://(www\.|m\.|music\.)?(youtube\.com|youtu\.be)/")
+
+MAX_PER_HOUR = int(os.environ.get("MAX_PER_HOUR", "60"))
+
+# ponytail: un solo contador global (no por IP): la API es de un solo usuario y
+# si la clave se filtra esto evita que la usen para quemar la IP con YouTube.
+_recent: deque[float] = deque()
+_recent_lock = threading.Lock()
+
+
+def allow() -> bool:
+    now = time.monotonic()
+    with _recent_lock:
+        while _recent and now - _recent[0] > 3600:
+            _recent.popleft()
+        if len(_recent) >= MAX_PER_HOUR:
+            return False
+        _recent.append(now)
+        return True
+
 
 # ponytail: una descarga a la vez alcanza para un solo usuario; si algún día lo
 # usan varios, subir el semáforo y medir RAM/CPU del plan de Railway.
@@ -82,6 +104,8 @@ class Handler(BaseHTTPRequestHandler):
         auth = self.headers.get("Authorization", "")
         if not hmac.compare_digest(auth.encode(), f"Bearer {TOKEN}".encode()):
             return self._reply(401, "clave incorrecta")
+        if not allow():
+            return self._reply(429, "demasiadas peticiones, espera un rato")
         url = parse_qs(parsed.query).get("url", [""])[0]
         if not YOUTUBE.match(url):
             return self._reply(400, "solo links de YouTube")

@@ -11,7 +11,8 @@ entrega al teléfono. Python + yt-dlp, sin base de datos.
   el video desde el teléfono.
 
 Variables: `SURCO_API_TOKEN` (obligatoria, 24+ caracteres), `MAX_MINUTES`
-(por defecto 20), `PORT` (Railway la pone sola).
+(por defecto 20), `MAX_PER_HOUR` (peticiones por hora, por defecto 60), `PORT`
+(Railway la pone sola).
 
 Despliegue en Railway desde esta carpeta: `railway up`. La clave se define con
 `railway variables --set SURCO_API_TOKEN=...` y nunca va al repo.
