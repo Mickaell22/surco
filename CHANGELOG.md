@@ -2,6 +2,12 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); las versiones siguen [SemVer](https://semver.org/lang/es/).
 
+## [1.4.1] - 2026-10-31
+
+### Corregido
+- Descargar de YouTube cuando YouTube limita las peticiones de tu conexión: si el teléfono no puede leer el video y tienes servidor configurado, Surco pide los datos y el audio al servidor.
+- Errores de YouTube en español y sin el texto técnico en inglés.
+
 ## [1.4.0] - 2026-10-31
 
 ### Agregado
@@ -100,6 +106,13 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); l
 ### Agregado
 - Primera versión pública: biblioteca, letras sincronizadas, reproducción en segundo plano, cola, estadísticas locales, listas automáticas, seis temas y configuración.
 
+[1.4.1]: https://github.com/Mickaell22/surco/releases/tag/v1.4.1
+[1.4.0]: https://github.com/Mickaell22/surco/releases/tag/v1.4.0
+[1.3.3]: https://github.com/Mickaell22/surco/releases/tag/v1.3.3
+[1.3.2]: https://github.com/Mickaell22/surco/releases/tag/v1.3.2
+[1.3.1]: https://github.com/Mickaell22/surco/releases/tag/v1.3.1
+[1.3.0]: https://github.com/Mickaell22/surco/releases/tag/v1.3.0
+[1.2.1]: https://github.com/Mickaell22/surco/releases/tag/v1.2.1
 [1.2.0]: https://github.com/Mickaell22/surco/releases/tag/v1.2.0
 [1.1.1]: https://github.com/Mickaell22/surco/releases/tag/v1.1.1
 [1.1.0]: https://github.com/Mickaell22/surco/releases/tag/v1.1.0
