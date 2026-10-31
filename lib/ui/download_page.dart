@@ -29,7 +29,7 @@ class _DownloadPageState extends State<DownloadPage> {
   final _album = TextEditingController();
   var _step = _Step.link;
   String? _error;
-  VideoInfo? _info;
+  TrackInfo? _info;
   AudioOnlyStreamInfo? _stream;
   double _progress = 0;
   File? _file;
@@ -40,7 +40,7 @@ class _DownloadPageState extends State<DownloadPage> {
   String? _savedPath;
   bool _viaServer = false;
 
-  Duration get _length => _info?.video.duration ?? Duration.zero;
+  Duration get _length => _info?.duration ?? Duration.zero;
 
   @override
   void initState() {
@@ -63,32 +63,29 @@ class _DownloadPageState extends State<DownloadPage> {
 
   Future<void> _load() async {
     final url = findYoutubeUrl(_url.text);
-    if (url == null)
+    if (url == null) {
       return setState(() => _error = 'Eso no parece un link de YouTube.');
+    }
     setState(() {
       _step = _Step.loading;
       _error = null;
     });
     try {
-      final info = await fetchInfo(url);
-      if (info.streams.isEmpty)
-        throw 'YouTube no ofrece audio para este video.';
-      final tags = guessTags(info.video.title, info.video.author);
+      final info = await fetchInfo(url, server: settings.downloadServer);
+      final tags = guessTags(info.title, info.author);
       _title.text = tags.title;
       _artist.text = tags.artist;
       _album.text = tags.title;
       setState(() {
         _info = info;
-        _stream = info.streams.first;
+        _stream = info.streams.firstOrNull;
         _step = _Step.choose;
       });
-      fetchCover(
-        info.video,
-      ).then((c) => mounted ? setState(() => _cover = c) : null);
+      fetchCover(info).then((c) => mounted ? setState(() => _cover = c) : null);
     } catch (e) {
       setState(() {
         _step = _Step.link;
-        _error = 'No se pudo leer el video: $e';
+        _error = 'No se pudo leer el video: ${explainYoutubeError(e)}';
       });
     }
   }
@@ -100,26 +97,35 @@ class _DownloadPageState extends State<DownloadPage> {
     });
     try {
       final server = settings.downloadServer;
-      try {
-        // Con servidor propio se rinde antes: si YouTube bloquea, mejor no esperar.
-        _file = await downloadAudio(
-          _stream!,
-          (p) => setState(() => _progress = p),
-          stall: server == null
-              ? const Duration(seconds: 20)
-              : const Duration(seconds: 8),
-        );
-      } on YoutubeBlocked {
-        if (server == null) rethrow;
-        setState(() {
-          _viaServer = true;
-          _progress = 0;
-        });
+      if (_info!.viaServer) {
+        setState(() => _viaServer = true);
         _file = await downloadViaServer(
-          'https://youtu.be/${_info!.video.id}',
-          server,
+          _info!.url,
+          server!,
           (p) => setState(() => _progress = p),
         );
+      } else {
+        try {
+          // Con servidor propio se rinde antes: si YouTube bloquea, mejor no esperar.
+          _file = await downloadAudio(
+            _stream!,
+            (p) => setState(() => _progress = p),
+            stall: server == null
+                ? const Duration(seconds: 20)
+                : const Duration(seconds: 8),
+          );
+        } on YoutubeBlocked {
+          if (server == null) rethrow;
+          setState(() {
+            _viaServer = true;
+            _progress = 0;
+          });
+          _file = await downloadViaServer(
+            _info!.url,
+            server,
+            (p) => setState(() => _progress = p),
+          );
+        }
       }
       setState(() {
         _range = RangeValues(
@@ -132,7 +138,9 @@ class _DownloadPageState extends State<DownloadPage> {
     } catch (e) {
       setState(() {
         _step = _Step.choose;
-        _error = e is YoutubeBlocked ? '$e' : 'Falló la descarga: $e';
+        _error = e is YoutubeBlocked
+            ? '$e'
+            : 'Falló la descarga: ${explainYoutubeError(e)}';
       });
     }
   }
@@ -169,7 +177,8 @@ class _DownloadPageState extends State<DownloadPage> {
           title: _title.text.trim(),
           artist: _artist.text.trim(),
           album: _album.text.trim(),
-          year: releaseYear(_info!.video.description),
+          year:
+              _info!.releaseYear?.toString() ?? releaseYear(_info!.description),
           lyrics: _useLyrics ? _lyrics : null,
           coverJpeg: _useCover ? _cover : null,
         ),
@@ -266,7 +275,7 @@ class _DownloadPageState extends State<DownloadPage> {
   ];
 
   Widget _header(Ledger l) {
-    final v = _info!.video;
+    final v = _info!;
     return Row(
       children: [
         ClipRRect(
@@ -311,25 +320,33 @@ class _DownloadPageState extends State<DownloadPage> {
       'Calidad',
       style: TextStyle(fontWeight: FontWeight.w600, color: l.ink),
     ),
-    RadioGroup<AudioOnlyStreamInfo>(
-      groupValue: _stream,
-      onChanged: (s) => setState(() => _stream = s),
-      child: Column(
-        children: [
-          for (final (i, s) in _info!.streams.indexed)
-            RadioListTile<AudioOnlyStreamInfo>(
-              value: s,
-              contentPadding: EdgeInsets.zero,
-              title: Text(
-                '${s.bitrate.kiloBitsPerSecond.round()} kbps${i == 0 ? ' · recomendada' : ''}',
+    if (_info!.viaServer)
+      const ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: Icon(Icons.dns_outlined),
+        title: Text('La mejor disponible, desde tu servidor'),
+        subtitle: Text('YouTube no dejó leer el video desde el teléfono.'),
+      )
+    else
+      RadioGroup<AudioOnlyStreamInfo>(
+        groupValue: _stream,
+        onChanged: (s) => setState(() => _stream = s),
+        child: Column(
+          children: [
+            for (final (i, s) in _info!.streams.indexed)
+              RadioListTile<AudioOnlyStreamInfo>(
+                value: s,
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  '${s.bitrate.kiloBitsPerSecond.round()} kbps${i == 0 ? ' · recomendada' : ''}',
+                ),
+                subtitle: Text(
+                  'AAC (.m4a) · ${s.size.totalMegaBytes.toStringAsFixed(1)} MB',
+                ),
               ),
-              subtitle: Text(
-                'AAC (.m4a) · ${s.size.totalMegaBytes.toStringAsFixed(1)} MB',
-              ),
-            ),
-        ],
+          ],
+        ),
       ),
-    ),
     const SizedBox(height: 12),
     FilledButton.icon(
       onPressed: _download,

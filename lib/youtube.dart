@@ -14,7 +14,40 @@ import 'native.dart';
 // ponytail: YouTube cambia su sistema seguido; si deja de bajar, actualizar
 // youtube_explode_dart es casi siempre todo el arreglo.
 
-typedef VideoInfo = ({Video video, List<AudioOnlyStreamInfo> streams});
+/// Datos de un video, leídos en el teléfono o, si YouTube no deja, en el
+/// servidor propio. Sin [streams] la descarga va por el servidor.
+class TrackInfo {
+  const TrackInfo({
+    required this.id,
+    required this.title,
+    required this.author,
+    required this.duration,
+    required this.description,
+    required this.thumbnails,
+    this.streams = const [],
+    this.releaseYear,
+  });
+
+  final String id, title, author, description;
+  final Duration duration;
+
+  /// Miniaturas a probar, la mejor primero.
+  final List<String> thumbnails;
+  final List<AudioOnlyStreamInfo> streams;
+  final int? releaseYear;
+
+  bool get viaServer => streams.isEmpty;
+  String get url => 'https://youtu.be/$id';
+}
+
+/// Mensaje claro para los errores de YouTube (el paquete los da en inglés y largos).
+String explainYoutubeError(Object e) => switch (e) {
+  RequestLimitExceededException() =>
+    'YouTube está limitando las peticiones desde tu conexión. Espera un rato o configura tu servidor de descargas.',
+  VideoUnplayableException() =>
+    'YouTube no deja reproducir este video (privado, con límite de edad o de región).',
+  _ => '$e'.split('\n').first,
+};
 
 /// Extrae el link de un texto compartido ("Mira esto https://youtu.be/...").
 String? findYoutubeUrl(String text) {
@@ -23,7 +56,9 @@ String? findYoutubeUrl(String text) {
   return VideoId.parseVideoId(url) == null ? null : url;
 }
 
-Future<VideoInfo> fetchInfo(String url) async {
+/// Lee el video en el teléfono; si YouTube no deja (límite, bloqueo, sin
+/// audio) y hay [server], le pide los datos al servidor.
+Future<TrackInfo> fetchInfo(String url, {DownloadServer? server}) async {
   final yt = YoutubeExplode();
   try {
     final video = await yt.videos.get(url);
@@ -33,9 +68,57 @@ Future<VideoInfo> fetchInfo(String url) async {
             .where((s) => s.container == StreamContainer.mp4)
             .toList()
           ..sort((a, b) => b.bitrate.compareTo(a.bitrate));
-    return (video: video, streams: streams);
+    if (streams.isEmpty && server == null) {
+      throw 'YouTube no ofrece audio para este video.';
+    }
+    return TrackInfo(
+      id: video.id.value,
+      title: video.title,
+      author: video.author,
+      duration: video.duration ?? Duration.zero,
+      description: video.description,
+      thumbnails: [video.thumbnails.maxResUrl, video.thumbnails.highResUrl],
+      streams: streams,
+    );
+  } catch (e) {
+    if (server == null) throw explainYoutubeError(e);
+    return _infoFromServer(url, server);
   } finally {
     yt.close();
+  }
+}
+
+Future<TrackInfo> _infoFromServer(String url, DownloadServer server) async {
+  final client = HttpClient()..connectionTimeout = const Duration(seconds: 15);
+  try {
+    final uri = Uri.parse(
+      '${server.url.replaceAll(RegExp(r'/+$'), '')}/info',
+    ).replace(queryParameters: {'url': url});
+    final req = await client.getUrl(uri);
+    req.headers.set(HttpHeaders.authorizationHeader, 'Bearer ${server.token}');
+    final res = await req.close().timeout(const Duration(seconds: 60));
+    final body = await res.transform(utf8.decoder).join();
+    if (res.statusCode != 200) {
+      throw res.statusCode == 401
+          ? 'La clave del servidor no es correcta.'
+          : 'El servidor no pudo leer el video: $body';
+    }
+    final j = jsonDecode(body) as Map<String, dynamic>;
+    final id = j['id'] as String;
+    return TrackInfo(
+      id: id,
+      title: j['title'] as String? ?? '',
+      author: j['author'] as String? ?? '',
+      duration: Duration(seconds: (j['duration'] as num?)?.round() ?? 0),
+      description: j['description'] as String? ?? '',
+      thumbnails: [
+        'https://i.ytimg.com/vi/$id/maxresdefault.jpg',
+        if (j['thumbnail'] case final String t) t,
+      ],
+      releaseYear: (j['release_year'] as num?)?.toInt(),
+    );
+  } finally {
+    client.close();
   }
 }
 
@@ -221,8 +304,8 @@ Future<Uint8List?> _get(Uri url) async {
 }
 
 /// Miniatura del video recortada al cuadrado (la parte del centro).
-Future<Uint8List?> fetchCover(Video v) async {
-  for (final url in [v.thumbnails.maxResUrl, v.thumbnails.highResUrl]) {
+Future<Uint8List?> fetchCover(TrackInfo info) async {
+  for (final url in info.thumbnails) {
     final bytes = await _get(Uri.parse(url));
     if (bytes != null && bytes.length > 2000) return squareJpeg(bytes);
   }
@@ -269,8 +352,9 @@ String? bestLyrics(List<dynamic> results, Duration duration) {
     final d = (r['duration'] as num?)?.toDouble();
     if (d != null &&
         duration > Duration.zero &&
-        (d - duration.inSeconds).abs() > 5)
+        (d - duration.inSeconds).abs() > 5) {
       continue;
+    }
     for (final (key, bonus) in [
       ('syncedLyrics', 1 << 20),
       ('plainLyrics', 0),
