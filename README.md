@@ -32,9 +32,11 @@
 
 <br/>
 
-<img src="./docs/screenshots/listas.png" alt="Pestaña de listas de Surco" width="270"/>
-&nbsp;&nbsp;
-<img src="./docs/screenshots/configuracion.png" alt="Configuración y temas de Surco" width="270"/>
+<img src="./docs/screenshots/reproductor.png" alt="Reproductor de Surco con manos libres y ecualizador" width="250"/>
+&nbsp;
+<img src="./docs/screenshots/youtube.png" alt="Descarga de YouTube con recorte, portada y etiquetas" width="250"/>
+&nbsp;
+<img src="./docs/screenshots/halloween.png" alt="Surco vestido de Halloween" width="250"/>
 
 </div>
 
@@ -77,7 +79,7 @@ Pega el link en ⋮ → *Descargar de YouTube*, o desde la app de YouTube toca *
 3. Revisa título, artista y álbum (salen limpios del nombre del video), la portada (miniatura recortada cuadrada) y la letra de [lrclib](https://lrclib.net), sincronizada si existe.
 4. Se guarda en `Music/Surco` con todo dentro del archivo.
 
-**Videos que YouTube bloquea en el teléfono:** algunos exigen una verificación anti-bots y no bajan desde la app. Si tienes tu propio servidor (la carpeta [`server/`](./server), con yt-dlp, lista para Railway), configúralo en *Configuración → Servidor de descargas* y Surco lo usa solo para esos casos.
+**Cuando YouTube no deja desde el teléfono:** algunos videos exigen una verificación anti-bots, y a veces YouTube limita las peticiones de tu conexión. Si tienes tu propio servidor (la carpeta [`server/`](./server), con yt-dlp, lista para Railway), configúralo en *Configuración → Servidor de descargas*: Surco le pide a él los datos del video y el audio solo en esos casos, y sigue funcionando aunque estés lejos de tu casa.
 
 > YouTube no permite descargar en sus términos de servicio: úsalo para tu música y bajo tu responsabilidad. YouTube cambia su sistema seguido, así que la descarga puede dejar de funcionar hasta la siguiente versión de Surco.
 
@@ -100,6 +102,8 @@ Surco cuenta una escucha con la regla de Last.fm: cuando la oyes hasta **la mita
 - Minutos por día de la semana.
 - Top de canciones y de artistas.
 
+<p align="center"><img src="./docs/screenshots/listas.png" alt="Pestaña de listas de Surco" width="250"/></p>
+
 Y arma solas las listas **Lo mejor de la semana**, **Más escuchadas**, **Escuchadas recientemente**, **Agregadas recientemente** y **Descubre** (canciones que nunca escuchaste, distintas cada día). Cada lista, tuya o automática, lleva un ícono y un tono propios según su nombre (entrenar, tristes, anime, rock...) para reconocerla de un vistazo.
 
 ## Temas
@@ -107,6 +111,8 @@ Y arma solas las listas **Lo mejor de la semana**, **Más escuchadas**, **Escuch
 Catorce paletas sobrias: **Papel** (cálida, la original), **Grafito**, **Bosque**, **Océano**, **Vino**, **Lavanda**, **Arena**, **Menta**, **Cobre**, **Pizarra**, **Ciruela**, **Atardecer**, **Musgo** y **Cielo**. Cada una con modo claro, oscuro o según el sistema, y **negro puro** opcional para pantallas AMOLED.
 
 La paleta puede quedarse **fija**, cambiar **cada día** (estable durante el día, nunca igual a la de ayer) o cambiar **cada vez que abres Surco** (nunca la misma seguida). Tocar una paleta mientras manda algo automático la aplica solo por hoy.
+
+<p align="center"><img src="./docs/screenshots/configuracion.png" alt="Configuración y paletas de Surco" width="250"/></p>
 
 **Temas de temporada** (se pueden desactivar): en sus fechas la app se viste sola, con decoraciones dibujadas (telarañas, luces, papel picado, confeti...) y un pequeño ícono junto al logo. La primera vez que abres Surco ese día sale el tema de la temporada; las siguientes, el cambio automático que elegiste.
 
