@@ -10,6 +10,7 @@ Variables de entorno:
 """
 
 import hmac
+import json
 import os
 import re
 import shutil
@@ -46,6 +47,21 @@ def download(url: str, folder: str) -> str:
         return ydl.prepare_filename(info)
 
 
+def info(url: str) -> dict:
+    """Datos del video sin bajarlo, para cuando YouTube no deja leerlo al teléfono."""
+    with yt_dlp.YoutubeDL({"quiet": True, "no_warnings": True, "noplaylist": True}) as ydl:
+        i = ydl.extract_info(url, download=False)
+    return {
+        "id": i.get("id"),
+        "title": i.get("title"),
+        "author": i.get("uploader") or i.get("channel"),
+        "duration": i.get("duration"),
+        "description": i.get("description") or "",
+        "thumbnail": i.get("thumbnail"),
+        "release_year": i.get("release_year"),
+    }
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "surco-api"
 
@@ -61,7 +77,7 @@ class Handler(BaseHTTPRequestHandler):
         parsed = urlparse(self.path)
         if parsed.path == "/health":
             return self._reply(200, "ok")
-        if parsed.path != "/audio":
+        if parsed.path not in ("/audio", "/info"):
             return self._reply(404, "no existe")
         auth = self.headers.get("Authorization", "")
         if not hmac.compare_digest(auth.encode(), f"Bearer {TOKEN}".encode()):
@@ -69,6 +85,17 @@ class Handler(BaseHTTPRequestHandler):
         url = parse_qs(parsed.query).get("url", [""])[0]
         if not YOUTUBE.match(url):
             return self._reply(400, "solo links de YouTube")
+        if parsed.path == "/info":
+            try:
+                body = json.dumps(info(url)).encode()
+            except Exception as e:  # yt-dlp lanza varios tipos; al cliente le basta el mensaje
+                return self._reply(502, f"no se pudo leer: {e}")
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
         if not _busy.acquire(timeout=120):
             return self._reply(503, "ocupado, intenta en un rato")
         folder = tempfile.mkdtemp()
