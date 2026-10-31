@@ -53,7 +53,13 @@ class Player extends ChangeNotifier {
   // Efectos nativos de Android, sin paquetes extra.
   final equalizer = AndroidEqualizer();
   final loudness = AndroidLoudnessEnhancer();
-  late final audio = AudioPlayer(audioPipeline: AudioPipeline(androidAudioEffects: [equalizer, loudness]));
+  // Interrupciones manejadas a mano (ver _initSession): las de fábrica pausan
+  // siempre al desconectar audífonos, aunque "Pausar al desconectar" esté apagado.
+  late final audio = AudioPlayer(
+    handleInterruptions: false,
+    audioPipeline: AudioPipeline(androidAudioEffects: [equalizer, loudness]),
+  );
+  bool _pausedByInterruption = false;
   List<Song> queue = [];
   Timer? _sleep;
   DateTime? sleepAt;
@@ -68,6 +74,21 @@ class Player extends ChangeNotifier {
     // Desconectar audifonos (cable o Bluetooth) dispara "becoming noisy".
     session.becomingNoisyEventStream.listen((_) {
       if (settings.pauseOnUnplug) audio.pause();
+    });
+    session.interruptionEventStream.listen((e) {
+      final duck = e.type == AudioInterruptionType.duck;
+      if (e.begin) {
+        if (duck) {
+          audio.setVolume(.3);
+        } else if (audio.playing) {
+          audio.pause();
+          _pausedByInterruption = e.type == AudioInterruptionType.pause;
+        }
+      } else {
+        audio.setVolume(1);
+        if (_pausedByInterruption) audio.play();
+        _pausedByInterruption = false;
+      }
     });
     await audio.setSkipSilenceEnabled(settings.skipSilence);
   }
