@@ -27,6 +27,10 @@ String _mime(String path) => switch (path.split('.').last.toLowerCase()) {
 Future<void> shareSong(Song s) =>
     _system('share', {'path': s.path, 'mime': _mime(s.path), 'title': '${s.title} · ${s.artist}'});
 
+/// Borra el archivo de la canción. Si no es de Surco, Android pide confirmar.
+/// Devuelve true si quedó borrado.
+Future<bool> deleteSongFile(String path) async => (await _system<bool>('delete', {'path': path})) ?? false;
+
 /// Abre el selector de carpetas de Android (SD, USB, Drive...). Devuelve la
 /// carpeta elegida o null si se canceló.
 Future<String?> pickFolder() => _system<String>('pickFolder');

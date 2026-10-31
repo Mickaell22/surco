@@ -3,11 +3,11 @@ import 'package:just_audio/just_audio.dart';
 
 import '../library.dart';
 import '../main.dart';
-import '../native.dart';
 import '../player.dart';
 import '../theme.dart';
 import 'decor.dart';
 import 'equalizer_page.dart';
+import 'song_actions.dart';
 import 'widgets.dart';
 
 class NowPlaying extends StatefulWidget {
@@ -40,7 +40,13 @@ class _NowPlayingState extends State<NowPlaying> {
       listenable: player,
       builder: (context, _) {
         final s = player.current;
-        if (s == null) return const Scaffold();
+        if (s == null) {
+          // Se borró la única canción de la cola: no queda nada que mostrar.
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) Navigator.maybePop(context);
+          });
+          return const Scaffold();
+        }
         return Stack(
           children: [
             Scaffold(
@@ -60,11 +66,6 @@ class _NowPlayingState extends State<NowPlaying> {
                 centerTitle: true,
                 actions: [
                   IconButton(
-                    tooltip: 'Compartir',
-                    onPressed: () => shareSong(s),
-                    icon: const Icon(Icons.share_outlined),
-                  ),
-                  IconButton(
                     tooltip: 'Ecualizador',
                     onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const EqualizerPage())),
                     icon: Icon(Icons.graphic_eq_rounded, color: settings.eqEnabled ? l.accent : l.ink),
@@ -73,6 +74,11 @@ class _NowPlayingState extends State<NowPlaying> {
                     tooltip: 'Temporizador',
                     onPressed: () => _sleepSheet(context),
                     icon: Icon(Icons.bedtime_outlined, color: player.sleepAt != null ? l.accent : l.ink),
+                  ),
+                  IconButton(
+                    tooltip: 'Compartir, borrar y más',
+                    onPressed: () => showSongActions(context, s),
+                    icon: const Icon(Icons.more_vert_rounded),
                   ),
                 ],
               ),

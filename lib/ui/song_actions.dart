@@ -71,6 +71,7 @@ void showSongActions(BuildContext context, Song s) {
             }),
           ),
           _Action(Icons.share_outlined, 'Compartir', () => go(() => shareSong(s))),
+          _Action(Icons.delete_outline_rounded, 'Borrar del teléfono', () => go(() => confirmDelete(context, s))),
           const SizedBox(height: 8),
         ],
       ),
@@ -93,4 +94,33 @@ class _Action extends StatelessWidget {
       onTap: onTap,
     );
   }
+}
+
+/// Pide confirmación, borra el archivo y lo saca de la cola y la biblioteca.
+Future<void> confirmDelete(BuildContext context, Song s) async {
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (d) => AlertDialog(
+      title: const Text('Borrar canción'),
+      content: Text('Se borra "${s.title}" de ${s.artist} del teléfono. No se puede deshacer.'),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(d, false), child: const Text('Cancelar')),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: Theme.of(d).colorScheme.error),
+          onPressed: () => Navigator.pop(d, true),
+          child: const Text('Borrar'),
+        ),
+      ],
+    ),
+  );
+  if (ok != true) return;
+  final deleted = await deleteSongFile(s.path);
+  if (deleted) {
+    await player.forget(s.path);
+    await library.scan();
+  }
+  if (!context.mounted) return;
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(persist: false, content: Text(deleted ? 'Se borró "${s.title}".' : 'No se borró "${s.title}".')),
+  );
 }

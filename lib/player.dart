@@ -224,6 +224,28 @@ class Player extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Saca de la cola todas las apariciones de [path] (canción borrada). Si es
+  /// la que suena pasa a la siguiente; si era la única, se detiene.
+  Future<void> forget(String path) async {
+    for (var i = queue.length - 1; i >= 0; i--) {
+      if (queue[i].path != path) continue;
+      if (i == audio.currentIndex) {
+        if (queue.length == 1) {
+          await audio.stop();
+          await audio.clearAudioSources();
+          queue = [];
+          notifyListeners();
+          return;
+        }
+        await (audio.hasNext ? audio.seekToNext() : audio.seek(Duration.zero, index: i == 0 ? 1 : 0));
+      }
+      queue.removeAt(i);
+      await audio.removeAudioSourceAt(i);
+    }
+    _saveSession();
+    notifyListeners();
+  }
+
   Future<void> removeAt(int i) async {
     if (i == audio.currentIndex) return;
     queue.removeAt(i);

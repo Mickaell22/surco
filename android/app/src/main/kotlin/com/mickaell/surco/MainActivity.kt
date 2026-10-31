@@ -13,6 +13,7 @@ import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.provider.DocumentsContract
+import android.provider.MediaStore
 import android.webkit.MimeTypeMap
 import androidx.core.content.FileProvider
 import com.ryanheise.audioservice.AudioServiceActivity
@@ -27,6 +28,7 @@ import java.nio.ByteBuffer
 class MainActivity : AudioServiceActivity() {
     private lateinit var channel: MethodChannel
     private var pendingPick: MethodChannel.Result? = null
+    private var pendingDelete: Pair<File, MethodChannel.Result>? = null
     private val main = Handler(Looper.getMainLooper())
 
     /** Texto compartido con el que se abrió la app (un link de YouTube). */
@@ -105,6 +107,7 @@ class MainActivity : AudioServiceActivity() {
                     MediaScannerConnection.scanFile(this, arrayOf(call.argument<String>("path")!!), null, null)
                     result.success(null)
                 }
+                "delete" -> deleteAudio(File(call.argument<String>("path")!!), result)
                 "pickFolder" -> {
                     pendingPick?.success(null)
                     pendingPick = result
@@ -123,6 +126,14 @@ class MainActivity : AudioServiceActivity() {
     @Deprecated("startActivityForResult basta para un solo selector")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == DELETE_AUDIO) {
+            pendingDelete?.let { (file, result) ->
+                // Android ya lo borró si el usuario aceptó; confirmamos mirando el disco.
+                result.success(resultCode == RESULT_OK && !file.exists())
+            }
+            pendingDelete = null
+            return
+        }
         if (requestCode != PICK_FOLDER) return
         val uri = data?.data
         if (resultCode == RESULT_OK && uri != null) {
@@ -223,6 +234,40 @@ class MainActivity : AudioServiceActivity() {
         }
     }
 
+    /**
+     * Borra una cancion del telefono. Las que bajo Surco son suyas y se borran
+     * directo; las demas (copiadas por cable, de otra app) desde Android 11 solo
+     * se pueden borrar con la confirmacion del sistema (createDeleteRequest).
+     */
+    private fun deleteAudio(file: File, result: MethodChannel.Result) {
+        if (!file.exists() || file.delete()) {
+            MediaScannerConnection.scanFile(this, arrayOf(file.path), null, null)
+            result.success(true)
+            return
+        }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            result.success(false)
+            return
+        }
+        val uri = contentResolver.query(
+            MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+            arrayOf(MediaStore.Audio.Media._ID),
+            "${MediaStore.Audio.Media.DATA} = ?", arrayOf(file.path), null
+        )?.use { c ->
+            if (c.moveToFirst()) android.content.ContentUris.withAppendedId(
+                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, c.getLong(0)
+            ) else null
+        }
+        if (uri == null) {
+            result.success(false)
+            return
+        }
+        pendingDelete?.second?.success(false)
+        pendingDelete = file to result
+        val request = MediaStore.createDeleteRequest(contentResolver, listOf(uri))
+        startIntentSenderForResult(request.intentSender, DELETE_AUDIO, null, 0, 0, 0)
+    }
+
     /** Hijos de una carpeta (nombre -> tamano), leidos una sola vez. */
     private fun list(tree: Uri, docId: String, cache: HashMap<String, Map<String, Long>>): Map<String, Long> =
         cache.getOrPut(docId) {
@@ -254,5 +299,6 @@ class MainActivity : AudioServiceActivity() {
 
     companion object {
         private const val PICK_FOLDER = 4107
+        private const val DELETE_AUDIO = 4108
     }
 }
