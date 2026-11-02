@@ -78,19 +78,54 @@ class _DecorPainter extends CustomPainter {
       case Palette.halloween:
         _halloween(c, s, v);
       case Palette.navidad:
-        _lights(c, s.width, top, v);
-        _snow(c, s, v, 16);
+        _navidad(c, s, v);
       case Palette.muertos:
-        _papelPicado(c, s.width, top, v);
+        _muertos(c, s, v);
       case Palette.anioNuevo:
-        _confetti(c, s, v, 22, [l.accent, const Color(0xFFE2B84A), l.inkSoft]);
+        _vignette(c, s, const Color(0xFF1B2A55));
+        _fireworks(c, s, v);
+        _garland(
+          c,
+          s,
+          v,
+          96,
+          (o, i, sw) =>
+              _star(c, o + const Offset(0, 9), 7, i.isEven ? const Color(0xFFE2B84A) : const Color(0xFFC9CED6)),
+        );
+        _confetti(c, s, v, 30, [l.accent, const Color(0xFFE2B84A), l.inkSoft, const Color(0xFFC9CED6)]);
       case Palette.sanValentin:
+        _vignette(c, s, const Color(0xFFD6336C));
+        _garland(
+          c,
+          s,
+          v,
+          90,
+          (o, i, sw) => _heart(
+            c,
+            o + Offset(sw * 20, 10),
+            8,
+            [l.accent, const Color(0xFFF08CA8), const Color(0xFFB0222F)][i % 3],
+          ),
+        );
         _hearts(c, s, v);
       case Palette.cumple:
+        _garland(
+          c,
+          s,
+          v,
+          84,
+          (o, i, sw) => _pennant(
+            c,
+            o,
+            sw,
+            const [Color(0xFFE85C8A), Color(0xFF4FD1C5), Color(0xFFF2B33D), Color(0xFF8E5BD8)][i % 4],
+          ),
+        );
         _balloons(c, s, v);
-        _confetti(c, s, v, 14, [l.accent, const Color(0xFFF2B33D), const Color(0xFFE85C8A)]);
+        _confetti(c, s, v, 26, [l.accent, const Color(0xFFF2B33D), const Color(0xFFE85C8A)]);
       case Palette.carnaval:
-        _confetti(c, s, v, 30, const [
+        _streamers(c, s.width, top, v);
+        _confetti(c, s, v, 40, const [
           Color(0xFFE0457B),
           Color(0xFFF5C518),
           Color(0xFF2BB5A5),
@@ -98,16 +133,152 @@ class _DecorPainter extends CustomPainter {
           Color(0xFFF28C28),
         ]);
       case Palette.sanPatricio:
-        _falling(c, s, v, 10, (o, r) => _clover(c, o, r, const Color(0xFF3FA05A).withValues(alpha: .6)));
+        _vignette(c, s, const Color(0xFF2F8F4E));
+        _garland(
+          c,
+          s,
+          v,
+          84,
+          (o, i, sw) => _pennant(c, o, sw, const [Color(0xFF2F8F4E), Color(0xFFE2B84A), Color(0xFFE8862E)][i % 3]),
+        );
+        _falling(c, s, v, 18, (o, r) => _clover(c, o, r, const Color(0xFF3FA05A).withValues(alpha: .6)));
       case Palette.diaTierra:
-        _falling(c, s, v, 10, (o, r) => _leaf(c, o, r, const Color(0xFF4E9A5F).withValues(alpha: .55)));
+        _vignette(c, s, const Color(0xFF3E7F4F));
+        _garland(
+          c,
+          s,
+          v,
+          72,
+          (o, i, sw) => _leaf(c, o + Offset(sw * 30, 10), 9, const Color(0xFF4E9A5F).withValues(alpha: .9)),
+        );
+        _falling(
+          c,
+          s,
+          v,
+          18,
+          (o, r) => _leaf(
+            c,
+            o,
+            r,
+            Color.lerp(const Color(0xFF4E9A5F), const Color(0xFF9BBF4A), r / 11)!.withValues(alpha: .55),
+          ),
+        );
       case Palette.diaMadre:
-        _falling(c, s, v, 9, (o, r) => _flower(c, o, r, l.accent.withValues(alpha: .6)));
+        _vignette(c, s, l.accent);
+        _garland(
+          c,
+          s,
+          v,
+          78,
+          (o, i, sw) => _flower(c, o + Offset(sw * 20, 9), 9, i.isEven ? l.accent : const Color(0xFFF08CA8)),
+        );
+        _falling(c, s, v, 16, (o, r) => _flower(c, o, r, l.accent.withValues(alpha: .6)));
+      case Palette.diaPadre:
+        _garland(c, s, v, 84, (o, i, sw) => _pennant(c, o, sw, i.isEven ? l.accent : l.inkSoft.withValues(alpha: .7)));
+        _falling(c, s, v, 12, (o, r) => _star(c, o, r * .8, l.accent.withValues(alpha: .45)));
       case Palette.intiRaymi:
+        _vignette(c, s, const Color(0xFFF28C28));
+        _garland(
+          c,
+          s,
+          v,
+          84,
+          (o, i, sw) => _pennant(
+            c,
+            o,
+            sw,
+            const [
+              Color(0xFFE5484D),
+              Color(0xFFF28C28),
+              Color(0xFFF5C518),
+              Color(0xFFF3F1E6),
+              Color(0xFF46A758),
+              Color(0xFF3E8EDE),
+              Color(0xFF8E5BD8),
+            ][i % 7],
+          ),
+        );
         _sun(c, Offset(s.width - 10, top + 6), v);
+        _falling(c, s, v, 12, (o, r) => _star(c, o, r * .6, const Color(0xFFF6B23C).withValues(alpha: .5)));
       default:
         break;
     }
+    // Las temporadas sin escena propia en la barra llevan su adorno ahí.
+    if (barY case final y? when !const {Palette.halloween, Palette.muertos, Palette.navidad}.contains(p)) {
+      if (_gap(s) case (final x0, final x1)) {
+        c.save();
+        c.translate((x0 + x1) / 2 - 36, y - 20);
+        _BadgePainter(p, l).paint(c, const Size(72, 40));
+        c.restore();
+      }
+    }
+  }
+
+  /// Hueco libre de la barra superior entre el logo (termina en ~145) y la lupa
+  /// (empieza en ~ancho - 100); null en pantallas angostas.
+  (double, double)? _gap(Size s) {
+    final x0 = 156.0, x1 = s.width - 106;
+    return x1 - x0 < 80 ? null : (x0, x1);
+  }
+
+  /// Bordes teñidos: la pantalla entera se siente de fiesta sin tapar nada.
+  void _vignette(Canvas c, Size s, Color color) {
+    c.drawRect(
+      Offset.zero & s,
+      Paint()
+        ..shader = RadialGradient(
+          radius: .95,
+          colors: [
+            color.withValues(alpha: 0),
+            color.withValues(alpha: dark ? .2 : .1),
+          ],
+          stops: const [.55, 1],
+        ).createShader(Offset.zero & s),
+    );
+  }
+
+  /// Cordel que cuelga de la barra superior con tres adornos por tramo
+  /// (banderines, corazones, flores...). [draw] recibe el punto, el índice y un
+  /// leve vaivén en radianes.
+  void _garland(Canvas c, Size s, double v, double span, void Function(Offset o, int i, double sway) draw) {
+    final wire = Paint()
+      ..color = l.inkSoft.withValues(alpha: .45)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    var i = 0;
+    for (var x = 0.0; x < s.width; x += span) {
+      final a = Offset(x, top + 1), b = Offset(x + span, top + 1), mid = Offset(x + span / 2, top + 16);
+      c.drawPath(
+        Path()
+          ..moveTo(a.dx, a.dy)
+          ..quadraticBezierTo(mid.dx, mid.dy, b.dx, b.dy),
+        wire,
+      );
+      for (final f in [1 / 6, .5, 5 / 6]) {
+        final pt = Offset(
+          (1 - f) * (1 - f) * a.dx + 2 * (1 - f) * f * mid.dx + f * f * b.dx,
+          (1 - f) * (1 - f) * a.dy + 2 * (1 - f) * f * mid.dy + f * f * b.dy,
+        );
+        draw(pt, i, sin((v * 2 + i * .3) * 2 * pi) * .08);
+        i++;
+      }
+    }
+  }
+
+  /// Banderín triangular colgando de [o].
+  void _pennant(Canvas c, Offset o, double sway, Color color, {double w = 16, double h = 20}) {
+    c.save();
+    c.translate(o.dx, o.dy);
+    c.rotate(sway);
+    c.drawPath(
+      Path()
+        ..moveTo(-w / 2, 0)
+        ..lineTo(w / 2, 0)
+        ..lineTo(0, h)
+        ..close(),
+      Paint()..color = color,
+    );
+    c.restore();
   }
 
   @override
@@ -169,8 +340,8 @@ class _DecorPainter extends CustomPainter {
   /// entre el logo y la lupa.
   void _barScene(Canvas c, Size s, double y, double v) {
     // Hueco entre el logo (termina en ~145) y la lupa (empieza en ~ancho - 100).
-    final x0 = 156.0, x1 = s.width - 106;
-    if (x1 - x0 < 80) return; // pantalla angosta: no hay hueco
+    final (x0, x1) = _gap(s) ?? (0.0, 0.0);
+    if (x1 == 0) return;
     final moon = Offset(x1 - 8, y - 2);
     c.drawCircle(moon, 20, Paint()..color = const Color(0xFFF3E3A8).withValues(alpha: .12));
     c.drawPath(
@@ -332,6 +503,58 @@ class _DecorPainter extends CustomPainter {
 
   // --- Navidad ---
 
+  void _navidad(Canvas c, Size s, double v) {
+    _vignette(c, s, const Color(0xFF1F6B43));
+    _lights(c, s.width, top, v);
+    _snow(c, s, v, 42);
+    // Nieve acumulada al ras de la pantalla.
+    final bank = Path()..moveTo(0, s.height);
+    for (var x = 0.0; x <= s.width + 30; x += 30) {
+      bank.quadraticBezierTo(x + 15, s.height - 14 - 4 * sin(x / 40), x + 30, s.height - 8);
+    }
+    bank
+      ..lineTo(s.width, s.height)
+      ..close();
+    c.drawPath(bank, Paint()..color = Colors.white.withValues(alpha: dark ? .22 : .7));
+    if (barY case final y?) {
+      if (_gap(s) case (final x0, final x1)) {
+        _tree(c, Offset(x0 + 14, y + 13), 24, v);
+        _gift(c, Offset(x0 + 44, y + 2), 9);
+        _tree(c, Offset(x1 - 14, y + 13), 18, v + .4);
+      }
+    }
+  }
+
+  /// Pino con esferas que titilan y estrella en la punta; [o] es la base.
+  void _tree(Canvas c, Offset o, double h, double v) {
+    final green = Paint()..color = const Color(0xFF2E7D4F);
+    for (var k = 0; k < 3; k++) {
+      final top = o.dy - h + k * h * .25, w = h * (.35 + k * .17);
+      c.drawPath(
+        Path()
+          ..moveTo(o.dx, top)
+          ..lineTo(o.dx + w, top + h * .42)
+          ..lineTo(o.dx - w, top + h * .42)
+          ..close(),
+        green,
+      );
+    }
+    c.drawRect(
+      Rect.fromCenter(center: o + Offset(0, -h * .05), width: h * .14, height: h * .14),
+      Paint()..color = const Color(0xFF7A4A2A),
+    );
+    const colors = [Color(0xFFE5484D), Color(0xFFF5B83D), Color(0xFF3E8EDE)];
+    for (var i = 0; i < 6; i++) {
+      final r = Random(700 + i);
+      final y = o.dy - h * (.15 + r.nextDouble() * .6);
+      final spread = (o.dy - y) / h;
+      final x = o.dx + (r.nextDouble() - .5) * h * (1.1 - spread) * .9;
+      final glow = .5 + .5 * sin((v * 7 + i * .4) * 2 * pi);
+      c.drawCircle(Offset(x, y), 1.8, Paint()..color = colors[i % 3].withValues(alpha: .5 + .5 * glow));
+    }
+    _star(c, Offset(o.dx, o.dy - h - 1), h * .16, const Color(0xFFF5C518));
+  }
+
   void _lights(Canvas c, double w, double top, double v) {
     final wire = Paint()
       ..color = l.inkSoft.withValues(alpha: .5)
@@ -378,6 +601,167 @@ class _DecorPainter extends CustomPainter {
   }
 
   // --- Día de Muertos ---
+  // Papel picado arriba, pétalos de cempasúchil cayendo, mariposas monarca,
+  // velas en las esquinas de abajo y, en la barra, una calavera con su ofrenda.
+
+  void _muertos(Canvas c, Size s, double v) {
+    _vignette(c, s, const Color(0xFFD9541E));
+    _papelPicado(c, s.width, top, v);
+    _falling(
+      c,
+      s,
+      v,
+      32,
+      (o, r) =>
+          _petal(c, o, r * .85, (r > 8 ? const Color(0xFFF28C28) : const Color(0xFFF5B83D)).withValues(alpha: .7)),
+    );
+    // Calaveritas que suben despacio, como los fantasmas de Halloween.
+    for (var i = 0; i < 2; i++) {
+      final prog = (v * (.7 + i * .3) + i * .5) % 1;
+      final o = Offset(
+        s.width * (.22 + .5 * i) + 22 * sin((prog * 2 + i) * 2 * pi),
+        s.height * 1.05 - prog * s.height * 1.2,
+      );
+      c.saveLayer(
+        Rect.fromCircle(center: o, radius: 30),
+        Paint()..color = Colors.white.withValues(alpha: (dark ? .22 : .4) * sin(prog * pi)),
+      );
+      _calavera(c, o, 15);
+      c.restore();
+    }
+    // Monarcas cruzando de izquierda a derecha, de varios tamaños.
+    for (var i = 0; i < 6; i++) {
+      final speed = [1.0, 1.0, 2.0, 1.0, 2.0, 1.0][i];
+      final prog = (v * speed + i * .19) % 1;
+      final x = s.width * (prog * 1.3 - .15);
+      final y = top + 60 + i * (s.height - top - 190) / 6 + 26 * sin((v * speed + i) * 2 * pi * 2);
+      _monarch(c, Offset(x, y), [11.0, 8.0, 7.0, 13.0, 9.0, 10.0][i], v * 30 * speed + i, dark ? .8 : .9);
+    }
+    // Ofrendas en las esquinas de abajo (el centro es de los botones del sistema).
+    for (final (x, kind, size, ph) in [
+      (8.0, 0, 16.0, 0.0),
+      (22.0, 1, 8.0, 0.0),
+      (34.0, 0, 11.0, .5),
+      (48.0, 1, 6.0, 0.0),
+      (s.width - 48, 1, 6.0, 0.0),
+      (s.width - 34, 0, 12.0, .2),
+      (s.width - 22, 1, 8.0, 0.0),
+      (s.width - 8, 0, 17.0, .7),
+    ]) {
+      kind == 0 ? _candle(c, Offset(x, s.height - 3), size, v, ph) : _marigold(c, Offset(x, s.height - size - 1), size);
+    }
+    if (barY case final y?) {
+      if (_gap(s) case (final x0, final x1)) {
+        // Ofrenda: velas y flores; la calavera donde iría la luna.
+        _candle(c, Offset(x0 + 4, y + 12), 14, v, 0);
+        _marigold(c, Offset(x0 + 26, y + 4), 9);
+        _candle(c, Offset(x0 + 46, y + 12), 10, v, .6);
+        _marigold(c, Offset(x0 + 64, y + 6), 7);
+        _calavera(c, Offset(x1 - 12, y - 1), 12);
+      }
+    }
+  }
+
+  void _petal(Canvas c, Offset o, double r, Color color) {
+    c.drawOval(Rect.fromCenter(center: o, width: r * 1.1, height: r * 1.7), Paint()..color = color);
+  }
+
+  void _monarch(Canvas c, Offset o, double w, double phase, double alpha) {
+    // El aleteo achica las alas en horizontal, como si se cerraran.
+    final flap = .3 + .7 * (sin(phase * 2 * pi) * .5 + .5);
+    final wing = Paint()..color = const Color(0xFFE8771E).withValues(alpha: alpha);
+    final vein = Paint()
+      ..color = const Color(0xFF1E1410).withValues(alpha: alpha)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.1;
+    final dot = Paint()..color = Colors.white.withValues(alpha: alpha * .9);
+    c.save();
+    c.translate(o.dx, o.dy);
+    c.rotate(.25 * sin(phase * .7));
+    for (final side in [-1.0, 1.0]) {
+      c.save();
+      c.scale(side * flap, 1);
+      final upper = Path()
+        ..moveTo(0, -1)
+        ..cubicTo(w * .4, -w * 1.15, w * 1.25, -w * .95, w * 1.05, -w * .15)
+        ..quadraticBezierTo(w * .6, w * .05, 0, 0)
+        ..close();
+      final lower = Path()
+        ..moveTo(0, 1)
+        ..cubicTo(w * .55, w * .1, w * .95, w * .5, w * .6, w * .9)
+        ..quadraticBezierTo(w * .2, w * .75, 0, 1)
+        ..close();
+      for (final path in [upper, lower]) {
+        c.drawPath(path, wing);
+        c.drawPath(path, vein);
+      }
+      c.drawLine(Offset(w * .1, -w * .1), Offset(w * .85, -w * .55), vein);
+      c.drawCircle(Offset(w * .95, -w * .45), w * .08, dot);
+      c.drawCircle(Offset(w * .6, w * .7), w * .07, dot);
+      c.restore();
+    }
+    c.drawLine(Offset(0, -w * .35), Offset(0, w * .6), vein..strokeWidth = 2);
+    c.restore();
+  }
+
+  void _candle(Canvas c, Offset base, double h, double v, double phase) {
+    final w = h * .38;
+    final flick = .6 + .25 * sin((v * 29 + phase) * 2 * pi) + .15 * sin((v * 41 + phase) * 2 * pi);
+    final flame = base - Offset(0, h + w * .9);
+    c.drawCircle(flame, h * .7, Paint()..color = const Color(0xFFFFA43A).withValues(alpha: .22 * flick));
+    c.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromLTWH(base.dx - w / 2, base.dy - h, w, h), Radius.circular(w * .25)),
+      Paint()..color = const Color(0xFFF3E6C8),
+    );
+    final fh = w * (1.6 + .4 * flick);
+    c.drawPath(
+      Path()
+        ..moveTo(flame.dx, flame.dy - fh * .6)
+        ..quadraticBezierTo(flame.dx + w * .55, flame.dy + fh * .1, flame.dx, flame.dy + fh * .4)
+        ..quadraticBezierTo(flame.dx - w * .55, flame.dy + fh * .1, flame.dx, flame.dy - fh * .6),
+      Paint()..color = Color.lerp(const Color(0xFFF28C28), const Color(0xFFFFE08A), flick)!,
+    );
+  }
+
+  /// Calavera de azúcar: blanca, ojos de flor, frente con puntos de colores.
+  void _calavera(Canvas c, Offset o, double r) {
+    const bone = Color(0xFFF7F1E6), dark = Color(0xFF2A1A20);
+    final skull = Paint()..color = bone;
+    c.drawCircle(o - Offset(0, r * .15), r, skull);
+    c.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(center: o + Offset(0, r * .62), width: r * 1.15, height: r * .75),
+        Radius.circular(r * .25),
+      ),
+      skull,
+    );
+    for (final (dx, col) in [(-.42, Color(0xFFC2185B)), (.42, Color(0xFF2BB5A5))]) {
+      final eye = o + Offset(dx * r, -r * .05);
+      for (var i = 0; i < 6; i++) {
+        final a = i * pi / 3;
+        c.drawCircle(eye + Offset(cos(a), sin(a)) * r * .22, r * .13, Paint()..color = col);
+      }
+      c.drawCircle(eye, r * .18, Paint()..color = dark);
+    }
+    c.drawPath(
+      Path()
+        ..moveTo(o.dx - r * .1, o.dy + r * .22)
+        ..lineTo(o.dx + r * .1, o.dy + r * .22)
+        ..lineTo(o.dx, o.dy + r * .38)
+        ..close(),
+      Paint()..color = dark,
+    );
+    final tooth = Paint()
+      ..color = dark.withValues(alpha: .7)
+      ..strokeWidth = .9;
+    c.drawLine(o + Offset(-r * .45, r * .7), o + Offset(r * .45, r * .7), tooth);
+    for (var k = -2; k <= 2; k++) {
+      c.drawLine(o + Offset(k * r * .17, r * .55), o + Offset(k * r * .17, r * .85), tooth);
+    }
+    for (final (dx, col) in [(-.32, Color(0xFFF5C518)), (0.0, Color(0xFFE0457B)), (.32, Color(0xFF8E5BD8))]) {
+      c.drawCircle(o + Offset(dx * r, -r * .72 + dx.abs() * r * .15), r * .1, Paint()..color = col);
+    }
+  }
 
   void _papelPicado(Canvas c, double w, double top, double v) {
     const colors = [Color(0xFFE0457B), Color(0xFFF28C28), Color(0xFFF5C518), Color(0xFF2BB5A5), Color(0xFF8E5BD8)];
@@ -416,7 +800,49 @@ class _DecorPainter extends CustomPainter {
     }
   }
 
-  // --- Año Nuevo / Cumpleaños ---
+  // --- Año Nuevo / Cumpleaños / Carnaval ---
+
+  /// Fuegos artificiales: estallidos que se abren y apagan en la parte de arriba.
+  void _fireworks(Canvas c, Size s, double v) {
+    const colors = [Color(0xFFE2B84A), Color(0xFFE5484D), Color(0xFF4FD1C5), Color(0xFFC9A0FF)];
+    for (var i = 0; i < 5; i++) {
+      final cycle = v * 4 + i / 5;
+      final prog = cycle % 1;
+      final r = Random(900 + i * 31 + cycle.floor());
+      final center = Offset(s.width * (.15 + r.nextDouble() * .7), top + 40 + r.nextDouble() * s.height * .35);
+      final col = colors[(i + cycle.floor()) % colors.length];
+      final radius = 18 + 46 * Curves.easeOut.transform(prog);
+      final fade = (1 - prog) * (dark ? .8 : .65);
+      for (var k = 0; k < 14; k++) {
+        final a = k * 2 * pi / 14 + i;
+        final pt = center + Offset(cos(a), sin(a)) * radius + Offset(0, 10 * prog * prog);
+        c.drawCircle(pt, 2.2 * (1 - prog * .5), Paint()..color = col.withValues(alpha: fade));
+      }
+      c.drawCircle(center, 6 * (1 - prog), Paint()..color = Colors.white.withValues(alpha: fade * .6));
+    }
+  }
+
+  /// Serpentinas onduladas colgando de la barra superior.
+  void _streamers(Canvas c, double w, double top, double v) {
+    const colors = [Color(0xFFE0457B), Color(0xFFF5C518), Color(0xFF2BB5A5), Color(0xFF8E5BD8), Color(0xFFF28C28)];
+    var i = 0;
+    for (var x = 18.0; x < w; x += 46) {
+      final path = Path()..moveTo(x, top);
+      for (var k = 1; k <= 6; k++) {
+        final dx = 7 * sin((v * 3 + i * .5 + k * .9) * 2 * pi) * (k / 6);
+        path.lineTo(x + dx + (k.isEven ? 5 : -5), top + k * 9);
+      }
+      c.drawPath(
+        path,
+        Paint()
+          ..color = colors[i % colors.length].withValues(alpha: .7)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.2
+          ..strokeCap = StrokeCap.round,
+      );
+      i++;
+    }
+  }
 
   void _confetti(Canvas c, Size s, double v, int n, List<Color> colors) {
     for (var i = 0; i < n; i++) {
@@ -433,9 +859,9 @@ class _DecorPainter extends CustomPainter {
 
   void _balloons(Canvas c, Size s, double v) {
     const colors = [Color(0xFFE85C8A), Color(0xFF4FD1C5), Color(0xFFF2B33D)];
-    for (var i = 0; i < 3; i++) {
+    for (var i = 0; i < 5; i++) {
       final r = Random(200 + i);
-      final x = (i.isEven ? .08 : .9) * s.width + r.nextDouble() * 20 + 8 * sin((v * 2 + i) * 2 * pi);
+      final x = [.08, .9, .3, .7, .5][i] * s.width + r.nextDouble() * 20 + 8 * sin((v * 2 + i) * 2 * pi);
       final y = s.height - ((v * .8 + i / 3) % 1) * (s.height + 120) + 40;
       final col = colors[i % colors.length].withValues(alpha: .75);
       c.drawLine(
@@ -519,7 +945,7 @@ class _DecorPainter extends CustomPainter {
   // --- San Valentín ---
 
   void _hearts(Canvas c, Size s, double v) {
-    for (var i = 0; i < 9; i++) {
+    for (var i = 0; i < 16; i++) {
       final r = Random(300 + i);
       final prog = (v * (.6 + r.nextDouble() * .5) + r.nextDouble()) % 1;
       final y = s.height - prog * (s.height * .7);
@@ -613,7 +1039,7 @@ class _BadgePainter extends CustomPainter {
       case Palette.sanValentin:
         _heart(c, Offset(s.width / 2, s.height * .62), 14, l.accent);
       case Palette.cumple:
-        _cake(c, Offset(s.width / 2, s.height * .62), 16);
+        _cake(c, Offset(s.width / 2, s.height * .62), 16, l.accent);
       case Palette.carnaval:
         for (final (x, col) in [(.3, Color(0xFFE0457B)), (.5, Color(0xFFF5C518)), (.7, Color(0xFF2BB5A5))]) {
           _star(c, Offset(s.width * x, s.height * .5), 8, col);
@@ -676,57 +1102,57 @@ class _BadgePainter extends CustomPainter {
     }
   }
 
-  void _marigold(Canvas c, Offset o, double r) {
-    for (var ring = 0; ring < 2; ring++) {
-      final paint = Paint()..color = ring == 0 ? const Color(0xFFF28C28) : const Color(0xFFF5B83D);
-      final rr = r * (ring == 0 ? 1 : .65);
-      for (var i = 0; i < 10; i++) {
-        final a = i * 2 * pi / 10 + ring * .3;
-        c.drawCircle(o + Offset(cos(a), sin(a)) * rr * .6, rr * .42, paint);
-      }
-    }
-    c.drawCircle(o, r * .22, Paint()..color = const Color(0xFFB4530A));
-  }
-
-  void _gift(Canvas c, Offset o, double r) {
-    final box = Rect.fromCenter(center: o + Offset(0, r * .2), width: r * 2, height: r * 1.5);
-    c.drawRRect(RRect.fromRectAndRadius(box, const Radius.circular(3)), Paint()..color = const Color(0xFFB0222F));
-    final ribbon = Paint()..color = const Color(0xFFF5C518);
-    c.drawRect(Rect.fromCenter(center: box.center, width: r * .35, height: box.height), ribbon);
-    c.drawRect(Rect.fromLTWH(box.left, box.top - 2, box.width, r * .4), Paint()..color = const Color(0xFF8E1A24));
-    for (final dx in [-1, 1]) {
-      c.drawOval(
-        Rect.fromCenter(center: Offset(o.dx + dx * r * .35, box.top - r * .25), width: r * .7, height: r * .45),
-        ribbon,
-      );
-    }
-  }
-
-  void _star(Canvas c, Offset o, double r, Color color) {
-    final path = Path();
-    for (var i = 0; i < 10; i++) {
-      final a = -pi / 2 + i * pi / 5;
-      final d = i.isEven ? r : r * .45;
-      final pt = o + Offset(cos(a), sin(a)) * d;
-      i == 0 ? path.moveTo(pt.dx, pt.dy) : path.lineTo(pt.dx, pt.dy);
-    }
-    c.drawPath(path..close(), Paint()..color = color);
-  }
-
-  void _cake(Canvas c, Offset o, double r) {
-    final base = Rect.fromCenter(center: o + Offset(0, r * .3), width: r * 2.2, height: r * 1.1);
-    c.drawRRect(RRect.fromRectAndRadius(base, const Radius.circular(4)), Paint()..color = const Color(0xFFF3D2B3));
-    c.drawRect(Rect.fromLTWH(base.left, base.top, base.width, r * .3), Paint()..color = l.accent);
-    c.drawRect(
-      Rect.fromCenter(center: Offset(o.dx, base.top - r * .35), width: r * .18, height: r * .6),
-      Paint()..color = const Color(0xFF7FB7E6),
-    );
-    c.drawOval(
-      Rect.fromCenter(center: Offset(o.dx, base.top - r * .8), width: r * .25, height: r * .4),
-      Paint()..color = const Color(0xFFF5B83D),
-    );
-  }
-
   @override
   bool shouldRepaint(_BadgePainter old) => old.p != p || old.l != l;
+}
+
+void _marigold(Canvas c, Offset o, double r) {
+  for (var ring = 0; ring < 2; ring++) {
+    final paint = Paint()..color = ring == 0 ? const Color(0xFFF28C28) : const Color(0xFFF5B83D);
+    final rr = r * (ring == 0 ? 1 : .65);
+    for (var i = 0; i < 10; i++) {
+      final a = i * 2 * pi / 10 + ring * .3;
+      c.drawCircle(o + Offset(cos(a), sin(a)) * rr * .6, rr * .42, paint);
+    }
+  }
+  c.drawCircle(o, r * .22, Paint()..color = const Color(0xFFB4530A));
+}
+
+void _gift(Canvas c, Offset o, double r) {
+  final box = Rect.fromCenter(center: o + Offset(0, r * .2), width: r * 2, height: r * 1.5);
+  c.drawRRect(RRect.fromRectAndRadius(box, const Radius.circular(3)), Paint()..color = const Color(0xFFB0222F));
+  final ribbon = Paint()..color = const Color(0xFFF5C518);
+  c.drawRect(Rect.fromCenter(center: box.center, width: r * .35, height: box.height), ribbon);
+  c.drawRect(Rect.fromLTWH(box.left, box.top - 2, box.width, r * .4), Paint()..color = const Color(0xFF8E1A24));
+  for (final dx in [-1, 1]) {
+    c.drawOval(
+      Rect.fromCenter(center: Offset(o.dx + dx * r * .35, box.top - r * .25), width: r * .7, height: r * .45),
+      ribbon,
+    );
+  }
+}
+
+void _star(Canvas c, Offset o, double r, Color color) {
+  final path = Path();
+  for (var i = 0; i < 10; i++) {
+    final a = -pi / 2 + i * pi / 5;
+    final d = i.isEven ? r : r * .45;
+    final pt = o + Offset(cos(a), sin(a)) * d;
+    i == 0 ? path.moveTo(pt.dx, pt.dy) : path.lineTo(pt.dx, pt.dy);
+  }
+  c.drawPath(path..close(), Paint()..color = color);
+}
+
+void _cake(Canvas c, Offset o, double r, Color accent) {
+  final base = Rect.fromCenter(center: o + Offset(0, r * .3), width: r * 2.2, height: r * 1.1);
+  c.drawRRect(RRect.fromRectAndRadius(base, const Radius.circular(4)), Paint()..color = const Color(0xFFF3D2B3));
+  c.drawRect(Rect.fromLTWH(base.left, base.top, base.width, r * .3), Paint()..color = accent);
+  c.drawRect(
+    Rect.fromCenter(center: Offset(o.dx, base.top - r * .35), width: r * .18, height: r * .6),
+    Paint()..color = const Color(0xFF7FB7E6),
+  );
+  c.drawOval(
+    Rect.fromCenter(center: Offset(o.dx, base.top - r * .8), width: r * .25, height: r * .4),
+    Paint()..color = const Color(0xFFF5B83D),
+  );
 }
