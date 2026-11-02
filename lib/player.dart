@@ -17,7 +17,8 @@ import 'stats.dart';
 /// y los botones de los audifonos Bluetooth los maneja just_audio_background.
 class Player extends ChangeNotifier {
   Player(this.stats, this.settings) {
-    audio.currentIndexStream.listen((_) {
+    audio.currentIndexStream.listen((i) {
+      if (_externalBack(i)) return;
       _commit();
       _saveSession();
       notifyListeners();
@@ -29,6 +30,9 @@ class Player extends ChangeNotifier {
     audio.playingStream.listen((playing) {
       playing ? _listened.start() : _listened.stop();
       if (!playing) _saveSession();
+    });
+    audio.positionStream.listen((p) {
+      if (audio.currentIndex == _index) _lastPos = p;
     });
     settings.addListener(() => audio.setSkipSilenceEnabled(settings.skipSilence));
     _initSession();
@@ -130,7 +134,8 @@ class Player extends ChangeNotifier {
       if (songs.isEmpty) return;
       final start = idx < paths.length ? songs.indexWhere((s) => s.path == paths[idx]) : 0;
       queue = songs;
-      await audio.setAudioSources(
+      _own();
+    await audio.setAudioSources(
         [for (final s in queue) AudioSource.file(s.path, tag: _media(s))],
         initialIndex: start < 0 ? 0 : start,
         initialPosition: start < 0 ? Duration.zero : Duration(milliseconds: j['pos'] ?? 0),
@@ -153,6 +158,7 @@ class Player extends ChangeNotifier {
     await audio.setShuffleModeEnabled(shuffle);
     // En aleatorio la primera también se sortea: antes arrancaba siempre en la
     // posición 0 (la primera por título) y solo se mezclaba el resto.
+    _own();
     await audio.setAudioSources([
       for (final s in queue) AudioSource.file(s.path, tag: _media(s)),
     ], initialIndex: shuffle ? Random().nextInt(queue.length) : index);
@@ -179,6 +185,7 @@ class Player extends ChangeNotifier {
     _beforePreview ??= (queue: List.of(queue), index: audio.currentIndex ?? 0, position: audio.position);
     queue = []; // sin cola: no se guarda sesión ni se cuentan escuchas
     notifyListeners();
+    _own();
     await audio.setAudioSource(
       ClippingAudioSource(
         child: AudioSource.file(path),
@@ -198,7 +205,8 @@ class Player extends ChangeNotifier {
     await audio.stop();
     queue = b.queue;
     if (queue.isNotEmpty) {
-      await audio.setAudioSources(
+      _own();
+    await audio.setAudioSources(
         [for (final s in queue) AudioSource.file(s.path, tag: _media(s))],
         initialIndex: b.index.clamp(0, queue.length - 1),
         initialPosition: b.position,
@@ -207,14 +215,45 @@ class Player extends ChangeNotifier {
     notifyListeners();
   }
 
+  // "Anterior" desde la notificación o los audífonos lo maneja
+  // just_audio_background sin pasar por [previous] y salta siempre a la
+  // anterior. ponytail: se detecta el salto y se deshace (reiniciando la
+  // canción); puede sonar un instante la anterior. Arreglarlo de raíz exige
+  // un AudioHandler propio en vez de just_audio_background.
+  int? _index;
+  Duration _lastPos = Duration.zero;
+  var _ownSkipAt = DateTime(0);
+  void _own() => _ownSkipAt = DateTime.now();
+
+  bool _externalBack(int? i) {
+    final old = _index, pos = _lastPos;
+    _index = i;
+    _lastPos = Duration.zero;
+    if (old == null || i == null || pos <= const Duration(seconds: 3)) return false;
+    if (DateTime.now().difference(_ownSkipAt) < const Duration(seconds: 1)) return false;
+    final order = audio.effectiveIndices;
+    final k = order.indexOf(old);
+    final prev = k > 0 ? order[k - 1] : (audio.loopMode == LoopMode.all && order.isNotEmpty ? order.last : null);
+    if (i != prev) return false;
+    _own();
+    audio.seek(Duration.zero, index: old);
+    return true;
+  }
+
   void toggle() => audio.playing ? audio.pause() : audio.play();
 
-  Future<void> next() => audio.hasNext ? audio.seekToNext() : audio.seek(Duration.zero, index: 0);
+  Future<void> next() {
+    _own();
+    return audio.hasNext ? audio.seekToNext() : audio.seek(Duration.zero, index: 0);
+  }
 
   /// Como en cualquier reproductor: si ya van 3 s, "anterior" reinicia la cancion.
-  Future<void> previous() => audio.position > const Duration(seconds: 3) || !audio.hasPrevious
-      ? audio.seek(Duration.zero)
-      : audio.seekToPrevious();
+  Future<void> previous() {
+    _own();
+    return audio.position > const Duration(seconds: 3) || !audio.hasPrevious
+        ? audio.seek(Duration.zero)
+        : audio.seekToPrevious();
+  }
 
   Future<void> cycleLoop() => audio.setLoopMode(switch (audio.loopMode) {
     LoopMode.off => LoopMode.all,
@@ -228,7 +267,10 @@ class Player extends ChangeNotifier {
     await audio.setShuffleModeEnabled(on);
   }
 
-  Future<void> jumpTo(int queueIndex) => audio.seek(Duration.zero, index: queueIndex);
+  Future<void> jumpTo(int queueIndex) {
+    _own();
+    return audio.seek(Duration.zero, index: queueIndex);
+  }
 
   Future<void> playNext(Song s) async {
     if (queue.isEmpty) return playList([s], 0);
@@ -258,9 +300,11 @@ class Player extends ChangeNotifier {
           notifyListeners();
           return;
         }
+        _own();
         await (audio.hasNext ? audio.seekToNext() : audio.seek(Duration.zero, index: i == 0 ? 1 : 0));
       }
       queue.removeAt(i);
+      _own();
       await audio.removeAudioSourceAt(i);
     }
     _saveSession();
@@ -270,6 +314,7 @@ class Player extends ChangeNotifier {
   Future<void> removeAt(int i) async {
     if (i == audio.currentIndex) return;
     queue.removeAt(i);
+    _own(); // quitar una canción anterior corre el índice actual
     await audio.removeAudioSourceAt(i);
     notifyListeners();
   }
