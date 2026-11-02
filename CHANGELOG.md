@@ -2,6 +2,15 @@
 
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); las versiones siguen [SemVer](https://semver.org/lang/es/).
 
+## [1.5.0] - 2026-11-01
+
+### Agregado
+- Día de Muertos con escena completa: papel picado, pétalos de cempasúchil, mariposas monarca, calaveritas que suben, ofrendas con velas y una calavera de azúcar en la barra.
+- Más decoración en las demás temporadas: pinos y nieve acumulada en Navidad, fuegos artificiales en Año Nuevo, guirnaldas propias (corazones, flores, hojas, banderines) y su adorno en la barra. El Día del Padre ahora también tiene decoración.
+
+### Corregido
+- "Anterior" desde la notificación o los audífonos reinicia la canción si ya van más de 3 segundos, igual que el botón de la app; tocarlo otra vez va a la anterior.
+
 ## [1.4.1] - 2026-10-31
 
 ### Corregido
@@ -106,6 +115,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); l
 ### Agregado
 - Primera versión pública: biblioteca, letras sincronizadas, reproducción en segundo plano, cola, estadísticas locales, listas automáticas, seis temas y configuración.
 
+[1.5.0]: https://github.com/Mickaell22/surco/releases/tag/v1.5.0
 [1.4.1]: https://github.com/Mickaell22/surco/releases/tag/v1.4.1
 [1.4.0]: https://github.com/Mickaell22/surco/releases/tag/v1.4.0
 [1.3.3]: https://github.com/Mickaell22/surco/releases/tag/v1.3.3
